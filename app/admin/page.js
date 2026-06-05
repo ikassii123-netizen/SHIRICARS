@@ -1,0 +1,486 @@
+'use client'
+import { useState, useEffect, useCallback } from 'react'
+import { supabase } from '../../lib/supabase'
+import Link from 'next/link'
+
+// ─── Helpers ───────────────────────────────────────────────────────────────
+function formatPrix(n) {
+  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n)
+}
+
+const CARBURANTS     = ['Essence', 'Diesel', 'Hybride', 'Hybride Rechargeable', 'Électrique']
+const TRANSMISSIONS  = ['Manuelle', 'Automatique']
+const VIDE = {
+  marque: '', modele: '', annee: new Date().getFullYear(),
+  kilometrage: 0, carburant: 'Essence', transmission: 'Manuelle',
+  prix: '', prix_barre: '', statut: 'disponible', description: '',
+}
+
+// ─── Composant Login ──────────────────────────────────────────────────────
+function LoginForm({ onLogin }) {
+  const [email, setEmail] = useState('')
+  const [pass, setPass]   = useState('')
+  const [err, setErr]     = useState('')
+  const [load, setLoad]   = useState(false)
+
+  async function handleLogin(e) {
+    e.preventDefault()
+    setLoad(true); setErr('')
+    const { error } = await supabase.auth.signInWithPassword({ email, password: pass })
+    if (error) setErr('Email ou mot de passe incorrect.')
+    else onLogin()
+    setLoad(false)
+  }
+
+  return (
+    <div className="min-h-screen bg-marine-900 flex items-center justify-center p-4">
+      <div className="bg-white rounded-3xl shadow-2xl p-10 w-full max-w-md">
+        <div className="text-center mb-8">
+          <div className="w-14 h-14 bg-red-600 rounded-2xl flex items-center justify-center font-black text-white text-xl mx-auto mb-4">SC</div>
+          <h1 className="text-2xl font-black text-slate-900">Administration</h1>
+          <p className="text-slate-500 mt-1">SHIRI CARS — Espace sécurisé</p>
+        </div>
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1">Email</label>
+            <input type="email" required value={email} onChange={e => setEmail(e.target.value)}
+              className="input-field" placeholder="admin@shiricars.fr" />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1">Mot de passe</label>
+            <input type="password" required value={pass} onChange={e => setPass(e.target.value)}
+              className="input-field" placeholder="••••••••" />
+          </div>
+          {err && <p className="text-red-600 text-sm bg-red-50 px-4 py-2 rounded-lg">{err}</p>}
+          <button type="submit" disabled={load} className="btn-primary w-full">
+            {load ? 'Connexion...' : 'Se Connecter'}
+          </button>
+        </form>
+        <p className="text-center mt-6 text-slate-400 text-sm">
+          <Link href="/" className="text-blue-600 hover:underline">← Retour au site</Link>
+        </p>
+      </div>
+    </div>
+  )
+}
+
+// ─── Formulaire Voiture ────────────────────────────────────────────────────
+function VoitureForm({ initial, onSave, onCancel, uploading, onUpload }) {
+  const [form, setForm] = useState(initial || VIDE)
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    await onSave({
+      ...form,
+      annee:       parseInt(form.annee),
+      kilometrage: parseInt(form.kilometrage),
+      prix:        parseFloat(form.prix),
+      prix_barre:  form.prix_barre ? parseFloat(form.prix_barre) : null,
+    })
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 space-y-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 mb-1">Marque *</label>
+          <input required value={form.marque} onChange={e => set('marque', e.target.value)}
+            className="input-field" placeholder="Peugeot" />
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 mb-1">Modèle *</label>
+          <input required value={form.modele} onChange={e => set('modele', e.target.value)}
+            className="input-field" placeholder="308 GT" />
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 mb-1">Année *</label>
+          <input type="number" required min="1990" max={new Date().getFullYear() + 1}
+            value={form.annee} onChange={e => set('annee', e.target.value)}
+            className="input-field" />
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 mb-1">Kilométrage *</label>
+          <input type="number" required min="0" value={form.kilometrage}
+            onChange={e => set('kilometrage', e.target.value)} className="input-field" />
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 mb-1">Carburant *</label>
+          <select value={form.carburant} onChange={e => set('carburant', e.target.value)} className="input-field">
+            {CARBURANTS.map(c => <option key={c}>{c}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 mb-1">Transmission *</label>
+          <select value={form.transmission} onChange={e => set('transmission', e.target.value)} className="input-field">
+            {TRANSMISSIONS.map(t => <option key={t}>{t}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 mb-1">Prix de vente (€) *</label>
+          <input type="number" required min="0" step="100" value={form.prix}
+            onChange={e => set('prix', e.target.value)} className="input-field" placeholder="18500" />
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 mb-1">
+            Prix barré / avant remise (€) <span className="text-slate-400 font-normal">optionnel</span>
+          </label>
+          <input type="number" min="0" step="100" value={form.prix_barre}
+            onChange={e => set('prix_barre', e.target.value)} className="input-field" placeholder="22000" />
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 mb-1">Statut *</label>
+          <select value={form.statut} onChange={e => set('statut', e.target.value)} className="input-field">
+            <option value="disponible">Disponible</option>
+            <option value="vendu">Vendu</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-semibold text-slate-700 mb-1">Description</label>
+        <textarea rows={3} value={form.description} onChange={e => set('description', e.target.value)}
+          className="input-field resize-none" placeholder="Description du véhicule..." />
+      </div>
+
+      {/* Upload photos */}
+      <div>
+        <label className="block text-sm font-semibold text-slate-700 mb-2">Photos</label>
+        <label className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-6 cursor-pointer transition-colors ${uploading ? 'border-blue-300 bg-blue-50' : 'border-slate-200 hover:border-blue-300 hover:bg-slate-50'}`}>
+          <svg className="w-8 h-8 text-slate-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <span className="text-sm text-slate-500">{uploading ? 'Envoi en cours...' : 'Cliquez pour ajouter des photos'}</span>
+          <input type="file" accept="image/*" multiple className="hidden"
+            onChange={e => onUpload(e.target.files, form, f => setForm(f))} disabled={uploading} />
+        </label>
+        {form.photos?.length > 0 && (
+          <div className="flex gap-2 mt-3 flex-wrap">
+            {form.photos.map((url, i) => (
+              <div key={i} className="relative group">
+                <img src={url} className="w-20 h-14 object-cover rounded-lg border border-slate-200" />
+                <button type="button"
+                  onClick={() => set('photos', form.photos.filter((_, j) => j !== i))}
+                  className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="flex gap-3 pt-2">
+        <button type="submit" className="btn-primary">
+          {initial ? 'Enregistrer les modifications' : 'Ajouter le véhicule'}
+        </button>
+        <button type="button" onClick={onCancel} className="btn-secondary">Annuler</button>
+      </div>
+    </form>
+  )
+}
+
+// ─── Panel Principal ───────────────────────────────────────────────────────
+export default function AdminPage() {
+  const [session, setSession]     = useState(null)
+  const [loading, setLoading]     = useState(true)
+  const [voitures, setVoitures]   = useState([])
+  const [contacts, setContacts]   = useState([])
+  const [mode, setMode]           = useState('liste') // liste | ajouter | modifier
+  const [current, setCurrent]     = useState(null)
+  const [uploading, setUploading] = useState(false)
+  const [onglet, setOnglet]       = useState('voitures') // voitures | messages
+  const [toast, setToast]         = useState(null)
+
+  const showToast = (msg, type = 'ok') => {
+    setToast({ msg, type })
+    setTimeout(() => setToast(null), 3500)
+  }
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+      setLoading(false)
+    })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
+
+  const loadVoitures = useCallback(async () => {
+    const { data } = await supabase.from('voitures').select('*').order('date_ajout', { ascending: false })
+    setVoitures(data || [])
+  }, [])
+
+  const loadContacts = useCallback(async () => {
+    const { data } = await supabase.from('contacts').select('*').order('date_envoi', { ascending: false })
+    setContacts(data || [])
+  }, [])
+
+  useEffect(() => {
+    if (session) { loadVoitures(); loadContacts() }
+  }, [session, loadVoitures, loadContacts])
+
+  async function handleUpload(files, form, setForm) {
+    setUploading(true)
+    const urls = [...(form.photos || [])]
+    for (const file of Array.from(files)) {
+      const ext  = file.name.split('.').pop()
+      const name = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+      const { data, error } = await supabase.storage.from('voitures').upload(name, file, { upsert: false })
+      if (!error) {
+        const { data: { publicUrl } } = supabase.storage.from('voitures').getPublicUrl(data.path)
+        urls.push(publicUrl)
+      }
+    }
+    setForm(f => ({ ...f, photos: urls }))
+    setUploading(false)
+  }
+
+  async function handleSave(data) {
+    if (mode === 'modifier' && current) {
+      const { error } = await supabase.from('voitures').update(data).eq('id', current.id)
+      if (!error) { showToast('Véhicule modifié avec succès'); await loadVoitures(); setMode('liste') }
+      else showToast('Erreur lors de la modification', 'err')
+    } else {
+      const { error } = await supabase.from('voitures').insert([data])
+      if (!error) { showToast('Véhicule ajouté avec succès'); await loadVoitures(); setMode('liste') }
+      else showToast('Erreur lors de l\'ajout', 'err')
+    }
+  }
+
+  async function handleDelete(id) {
+    if (!confirm('Supprimer ce véhicule définitivement ?')) return
+    await supabase.from('voitures').delete().eq('id', id)
+    showToast('Véhicule supprimé')
+    loadVoitures()
+  }
+
+  async function toggleLu(id, lu) {
+    await supabase.from('contacts').update({ lu: !lu }).eq('id', id)
+    loadContacts()
+  }
+
+  async function deleteContact(id) {
+    if (!confirm('Supprimer ce message ?')) return
+    await supabase.from('contacts').delete().eq('id', id)
+    loadContacts()
+  }
+
+  async function handleLogout() {
+    await supabase.auth.signOut()
+    setMode('liste')
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="animate-spin w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full" />
+      </div>
+    )
+  }
+
+  if (!session) return <LoginForm onLogin={() => {}} />
+
+  const nbNonLus = contacts.filter(c => !c.lu).length
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+      {/* Toast */}
+      {toast && (
+        <div className={`fixed top-4 right-4 z-50 px-5 py-3 rounded-xl shadow-xl text-sm font-semibold animate-fade-in-up ${
+          toast.type === 'err' ? 'bg-red-600 text-white' : 'bg-emerald-600 text-white'
+        }`}>
+          {toast.type === 'err' ? '❌' : '✅'} {toast.msg}
+        </div>
+      )}
+
+      {/* Sidebar */}
+      <div className="flex min-h-screen">
+        <aside className="w-64 bg-marine-900 text-white flex flex-col fixed left-0 top-0 h-full">
+          <div className="p-6 border-b border-marine-700">
+            <Link href="/" className="flex items-center gap-3">
+              <div className="w-9 h-9 bg-red-600 rounded-xl flex items-center justify-center font-black text-sm">SC</div>
+              <div>
+                <div className="font-black text-base">SHIRI CARS</div>
+                <div className="text-xs text-slate-400">Administration</div>
+              </div>
+            </Link>
+          </div>
+
+          <nav className="flex-1 p-4 space-y-1">
+            <button
+              onClick={() => { setOnglet('voitures'); setMode('liste') }}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${onglet === 'voitures' ? 'bg-marine-700 text-white' : 'text-slate-400 hover:text-white hover:bg-marine-800'}`}
+            >
+              🚗 Catalogue Véhicules
+              <span className="ml-auto bg-marine-600 text-xs px-2 py-0.5 rounded-full">{voitures.length}</span>
+            </button>
+            <button
+              onClick={() => setOnglet('messages')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${onglet === 'messages' ? 'bg-marine-700 text-white' : 'text-slate-400 hover:text-white hover:bg-marine-800'}`}
+            >
+              ✉️ Messages Clients
+              {nbNonLus > 0 && (
+                <span className="ml-auto bg-red-600 text-xs px-2 py-0.5 rounded-full">{nbNonLus}</span>
+              )}
+            </button>
+          </nav>
+
+          <div className="p-4 border-t border-marine-700">
+            <Link href="/" className="flex items-center gap-2 text-slate-400 hover:text-white text-sm mb-3 transition-colors">
+              ← Voir le site
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="w-full text-left text-slate-400 hover:text-red-400 text-sm transition-colors"
+            >
+              Déconnexion
+            </button>
+          </div>
+        </aside>
+
+        {/* Contenu principal */}
+        <main className="ml-64 flex-1 p-8">
+
+          {/* ─── Onglet Véhicules ─── */}
+          {onglet === 'voitures' && (
+            <>
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h1 className="text-2xl font-black text-slate-900">Catalogue Véhicules</h1>
+                  <p className="text-slate-500 text-sm mt-1">{voitures.length} véhicule{voitures.length !== 1 ? 's' : ''} enregistré{voitures.length !== 1 ? 's' : ''}</p>
+                </div>
+                {mode === 'liste' && (
+                  <button onClick={() => setMode('ajouter')} className="btn-primary">
+                    + Ajouter un véhicule
+                  </button>
+                )}
+              </div>
+
+              {(mode === 'ajouter' || mode === 'modifier') && (
+                <div className="mb-8">
+                  <h2 className="text-lg font-bold text-slate-900 mb-4">
+                    {mode === 'modifier' ? `Modifier : ${current.marque} ${current.modele}` : 'Nouveau véhicule'}
+                  </h2>
+                  <VoitureForm
+                    initial={mode === 'modifier' ? current : null}
+                    onSave={handleSave}
+                    onCancel={() => setMode('liste')}
+                    uploading={uploading}
+                    onUpload={handleUpload}
+                  />
+                </div>
+              )}
+
+              {mode === 'liste' && (
+                <div className="space-y-3">
+                  {voitures.length === 0 && (
+                    <div className="text-center py-16 text-slate-400 bg-white rounded-2xl border border-slate-100">
+                      <p className="text-lg font-medium">Aucun véhicule</p>
+                      <p className="text-sm mt-1">Cliquez sur &quot;Ajouter un véhicule&quot; pour commencer</p>
+                    </div>
+                  )}
+                  {voitures.map(v => (
+                    <div key={v.id} className="bg-white rounded-2xl border border-slate-100 p-4 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+                      <div className="w-20 h-14 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0">
+                        {v.photos?.[0]
+                          ? <img src={v.photos[0]} className="w-full h-full object-cover" />
+                          : <div className="w-full h-full flex items-center justify-center text-slate-400 text-2xl">🚗</div>
+                        }
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-bold text-slate-900">{v.marque} {v.modele} <span className="text-slate-500 font-normal">{v.annee}</span></div>
+                        <div className="text-sm text-slate-500">
+                          {new Intl.NumberFormat('fr-FR').format(v.kilometrage)} km · {v.carburant} · {v.transmission}
+                        </div>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <div className="font-black text-marine-700 text-lg">{formatPrix(v.prix)}</div>
+                        {v.prix_barre && <div className="text-slate-400 line-through text-sm">{formatPrix(v.prix_barre)}</div>}
+                      </div>
+                      <div className="flex-shrink-0">
+                        <span className={v.statut === 'disponible' ? 'badge-disponible' : 'badge-vendu'}>
+                          {v.statut === 'disponible' ? 'Disponible' : 'Vendu'}
+                        </span>
+                      </div>
+                      <div className="flex gap-2 flex-shrink-0">
+                        <button
+                          onClick={() => { setCurrent(v); setMode('modifier') }}
+                          className="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="Modifier"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          onClick={() => handleDelete(v.id)}
+                          className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Supprimer"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+
+          {/* ─── Onglet Messages ─── */}
+          {onglet === 'messages' && (
+            <>
+              <div className="mb-8">
+                <h1 className="text-2xl font-black text-slate-900">Messages Clients</h1>
+                <p className="text-slate-500 text-sm mt-1">
+                  {contacts.length} message{contacts.length !== 1 ? 's' : ''} · {nbNonLus} non lu{nbNonLus !== 1 ? 's' : ''}
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                {contacts.length === 0 && (
+                  <div className="text-center py-16 text-slate-400 bg-white rounded-2xl border border-slate-100">
+                    <p className="text-lg font-medium">Aucun message</p>
+                  </div>
+                )}
+                {contacts.map(c => (
+                  <div key={c.id} className={`bg-white rounded-2xl border p-5 shadow-sm ${!c.lu ? 'border-blue-200 bg-blue-50/40' : 'border-slate-100'}`}>
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-1">
+                          <span className="font-bold text-slate-900">{c.prenom} {c.nom}</span>
+                          {!c.lu && <span className="text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full font-semibold">Nouveau</span>}
+                          <span className="text-slate-400 text-xs">
+                            {new Date(c.date_envoi).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                        <div className="text-sm text-slate-500 mb-2">
+                          <a href={`mailto:${c.email}`} className="text-blue-600 hover:underline">{c.email}</a>
+                          {c.telephone && <span> · {c.telephone}</span>}
+                        </div>
+                        <p className="text-slate-700 text-sm leading-relaxed">{c.message}</p>
+                      </div>
+                      <div className="flex gap-2 flex-shrink-0">
+                        <button onClick={() => toggleLu(c.id, c.lu)}
+                          className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors text-sm"
+                          title={c.lu ? 'Marquer non lu' : 'Marquer lu'}>
+                          {c.lu ? '📭' : '📬'}
+                        </button>
+                        <button onClick={() => deleteContact(c.id)}
+                          className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Supprimer">
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </main>
+      </div>
+    </div>
+  )
+}
