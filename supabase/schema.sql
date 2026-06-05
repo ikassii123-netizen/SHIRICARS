@@ -56,6 +56,31 @@ CREATE POLICY "insertion_contacts" ON contacts
 CREATE POLICY "gestion_admin_contacts" ON contacts
   FOR ALL USING (auth.role() = 'authenticated');
 
+-- Table des paramètres du site (modifiables depuis l'admin)
+CREATE TABLE IF NOT EXISTS parametres (
+  cle    TEXT PRIMARY KEY,
+  valeur TEXT NOT NULL
+);
+
+ALTER TABLE parametres ENABLE ROW LEVEL SECURITY;
+
+-- Lecture publique (pour afficher les infos de contact sur le site)
+CREATE POLICY "lecture_publique_parametres" ON parametres
+  FOR SELECT USING (true);
+
+-- Modification réservée aux admins
+CREATE POLICY "ecriture_admin_parametres" ON parametres
+  FOR ALL USING (auth.role() = 'authenticated');
+
+INSERT INTO parametres (cle, valeur) VALUES
+  ('nom_entreprise', 'SHIRI CARS'),
+  ('slogan',         'Véhicules Français d''Exception'),
+  ('adresse',        'Paris, France'),
+  ('telephone',      '+33 1 23 45 67 89'),
+  ('email',          'contact@shiricars.fr'),
+  ('horaires',       'Lundi – Samedi : 9h00 – 19h00')
+ON CONFLICT (cle) DO NOTHING;
+
 -- =============================================
 -- Bucket de stockage pour les photos
 -- =============================================

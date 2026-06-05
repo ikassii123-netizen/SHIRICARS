@@ -182,15 +182,19 @@ function VoitureForm({ initial, onSave, onCancel, uploading, onUpload }) {
 
 // ─── Panel Principal ───────────────────────────────────────────────────────
 export default function AdminPage() {
-  const [session, setSession]     = useState(null)
-  const [loading, setLoading]     = useState(true)
-  const [voitures, setVoitures]   = useState([])
-  const [contacts, setContacts]   = useState([])
-  const [mode, setMode]           = useState('liste') // liste | ajouter | modifier
-  const [current, setCurrent]     = useState(null)
-  const [uploading, setUploading] = useState(false)
-  const [onglet, setOnglet]       = useState('voitures') // voitures | messages
-  const [toast, setToast]         = useState(null)
+  const [session, setSession]       = useState(null)
+  const [loading, setLoading]       = useState(true)
+  const [voitures, setVoitures]     = useState([])
+  const [contacts, setContacts]     = useState([])
+  const [mode, setMode]             = useState('liste')
+  const [current, setCurrent]       = useState(null)
+  const [uploading, setUploading]   = useState(false)
+  const [onglet, setOnglet]         = useState('voitures') // voitures | messages | parametres
+  const [toast, setToast]           = useState(null)
+  const [parametres, setParametres] = useState({
+    nom_entreprise: '', slogan: '', adresse: '', telephone: '', email: '', horaires: ''
+  })
+  const [savingParams, setSavingParams] = useState(false)
 
   const showToast = (msg, type = 'ok') => {
     setToast({ msg, type })
@@ -218,9 +222,27 @@ export default function AdminPage() {
     setContacts(data || [])
   }, [])
 
+  const loadParametres = useCallback(async () => {
+    const { data } = await supabase.from('parametres').select('cle, valeur')
+    if (data?.length) {
+      const map = Object.fromEntries(data.map(r => [r.cle, r.valeur]))
+      setParametres(prev => ({ ...prev, ...map }))
+    }
+  }, [])
+
   useEffect(() => {
-    if (session) { loadVoitures(); loadContacts() }
-  }, [session, loadVoitures, loadContacts])
+    if (session) { loadVoitures(); loadContacts(); loadParametres() }
+  }, [session, loadVoitures, loadContacts, loadParametres])
+
+  async function saveParametres(e) {
+    e.preventDefault()
+    setSavingParams(true)
+    const upserts = Object.entries(parametres).map(([cle, valeur]) => ({ cle, valeur }))
+    const { error } = await supabase.from('parametres').upsert(upserts, { onConflict: 'cle' })
+    if (!error) showToast('Paramètres sauvegardés avec succès')
+    else showToast('Erreur lors de la sauvegarde', 'err')
+    setSavingParams(false)
+  }
 
   async function handleUpload(files, form, setForm) {
     setUploading(true)
@@ -326,6 +348,12 @@ export default function AdminPage() {
                 <span className="ml-auto bg-red-600 text-xs px-2 py-0.5 rounded-full">{nbNonLus}</span>
               )}
             </button>
+            <button
+              onClick={() => setOnglet('parametres')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${onglet === 'parametres' ? 'bg-marine-700 text-white' : 'text-slate-400 hover:text-white hover:bg-marine-800'}`}
+            >
+              ⚙️ Paramètres du Site
+            </button>
           </nav>
 
           <div className="p-4 border-t border-marine-700">
@@ -425,6 +453,71 @@ export default function AdminPage() {
                   ))}
                 </div>
               )}
+            </>
+          )}
+
+          {/* ─── Onglet Paramètres ─── */}
+          {onglet === 'parametres' && (
+            <>
+              <div className="mb-8">
+                <h1 className="text-2xl font-black text-slate-900">Paramètres du Site</h1>
+                <p className="text-slate-500 text-sm mt-1">Modifiez les informations affichées sur votre site. Les changements sont visibles immédiatement.</p>
+              </div>
+
+              <form onSubmit={saveParametres} className="space-y-6 max-w-2xl">
+
+                <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
+                  <h2 className="font-bold text-slate-900 mb-4">🏢 Identité de l'entreprise</h2>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-1">Nom de l'entreprise</label>
+                      <input value={parametres.nom_entreprise}
+                        onChange={e => setParametres(p => ({ ...p, nom_entreprise: e.target.value }))}
+                        className="input-field" placeholder="SHIRI CARS" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-1">Slogan</label>
+                      <input value={parametres.slogan}
+                        onChange={e => setParametres(p => ({ ...p, slogan: e.target.value }))}
+                        className="input-field" placeholder="Véhicules Français d'Exception" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
+                  <h2 className="font-bold text-slate-900 mb-4">📞 Coordonnées de contact</h2>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-1">📍 Adresse</label>
+                      <input value={parametres.adresse}
+                        onChange={e => setParametres(p => ({ ...p, adresse: e.target.value }))}
+                        className="input-field" placeholder="12 Rue de la Paix, 75001 Paris" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-1">📞 Téléphone</label>
+                      <input value={parametres.telephone}
+                        onChange={e => setParametres(p => ({ ...p, telephone: e.target.value }))}
+                        className="input-field" placeholder="+33 1 23 45 67 89" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-1">✉️ Email</label>
+                      <input type="email" value={parametres.email}
+                        onChange={e => setParametres(p => ({ ...p, email: e.target.value }))}
+                        className="input-field" placeholder="contact@shiricars.fr" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-1">🕐 Horaires d'ouverture</label>
+                      <input value={parametres.horaires}
+                        onChange={e => setParametres(p => ({ ...p, horaires: e.target.value }))}
+                        className="input-field" placeholder="Lundi – Samedi : 9h00 – 19h00" />
+                    </div>
+                  </div>
+                </div>
+
+                <button type="submit" disabled={savingParams} className="btn-primary disabled:opacity-60 disabled:cursor-not-allowed">
+                  {savingParams ? 'Sauvegarde en cours...' : '💾 Sauvegarder les paramètres'}
+                </button>
+              </form>
             </>
           )}
 
