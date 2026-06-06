@@ -67,8 +67,8 @@ export default function CarModal({ voiture, onClose }) {
 
   const vendu   = voiture.statut === 'vendu'
   const reserve = voiture.statut === 'reserve'
-  const pct = voiture.prix_barre
-    ? Math.round((1 - voiture.prix / voiture.prix_barre) * 100)
+  const pct = voiture.prix_barre && voiture.prix_barre !== voiture.prix
+    ? Math.round(((voiture.prix - voiture.prix_barre) / voiture.prix_barre) * 100)
     : null
 
   return (
@@ -143,8 +143,8 @@ export default function CarModal({ voiture, onClose }) {
 
                 {/* Badge descuento (solo si 1 foto) */}
                 {pct && !vendu && photos.length === 1 && (
-                  <div className="absolute top-3 right-3 z-10 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-lg">
-                    -{pct}%
+                  <div className={`absolute top-3 right-3 z-10 text-white text-xs font-bold px-2 py-1 rounded-lg ${pct < 0 ? 'bg-red-600' : 'bg-green-600'}`}>
+                    {pct > 0 ? `+${pct}%` : `${pct}%`}
                   </div>
                 )}
 
@@ -220,7 +220,7 @@ export default function CarModal({ voiture, onClose }) {
                   <span className={`text-3xl font-black ${vendu ? 'text-slate-400' : 'text-marine-700'}`}>
                     {formatPrix(voiture.prix)}
                   </span>
-                  {voiture.prix_barre && (
+                  {voiture.prix_barre && voiture.prix_barre !== voiture.prix && (
                     <span className="text-slate-400 line-through text-base">
                       {formatPrix(voiture.prix_barre)}
                     </span>
@@ -228,8 +228,8 @@ export default function CarModal({ voiture, onClose }) {
                 </div>
               </div>
               {pct && !vendu && (
-                <div className="bg-red-100 text-red-700 font-black text-xl px-4 py-2 rounded-xl">
-                  -{pct}%
+                <div className={`font-black text-xl px-4 py-2 rounded-xl ${pct < 0 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                  {pct > 0 ? `+${pct}%` : `${pct}%`}
                 </div>
               )}
             </div>
