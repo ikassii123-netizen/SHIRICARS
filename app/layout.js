@@ -20,13 +20,13 @@ export async function generateMetadata() {
   try {
     const params = await getSiteTitle()
     return {
-      title: params.titre_site || 'SHIRI CARS — Véhicules Français d\'Exception',
+      title: params.titre_site || 'SY CAR — Véhicules Français d\'Exception',
       description: params.description_site || 'Découvrez notre sélection de voitures françaises de qualité. Peugeot, Renault, Citroën, DS — des véhicules vérifiés à prix transparents.',
       keywords: 'voitures françaises, occasion, Peugeot, Renault, Citroën, DS, vente auto',
     }
   } catch {
     return {
-      title: 'SHIRI CARS — Véhicules Français d\'Exception',
+      title: 'SY CAR — Véhicules Français d\'Exception',
       description: 'Découvrez notre sélection de voitures françaises de qualité. Peugeot, Renault, Citroën, DS — des véhicules vérifiés à prix transparents.',
     }
   }

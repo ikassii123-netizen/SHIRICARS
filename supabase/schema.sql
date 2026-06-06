@@ -84,9 +84,26 @@ ON CONFLICT (cle) DO NOTHING;
 -- =============================================
 -- Bucket de stockage pour les photos
 -- =============================================
--- (À créer manuellement dans Storage > Buckets > New bucket)
--- Nom du bucket : voitures
--- Accès public : OUI
+
+-- Création du bucket public
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('voitures', 'voitures', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+-- Lecture publique (tout le monde peut voir les photos)
+CREATE POLICY "lecture_publique_storage" ON storage.objects
+  FOR SELECT TO public
+  USING (bucket_id = 'voitures');
+
+-- Upload réservé aux admins authentifiés
+CREATE POLICY "upload_admin_storage" ON storage.objects
+  FOR INSERT TO authenticated
+  WITH CHECK (bucket_id = 'voitures');
+
+-- Suppression réservée aux admins authentifiés
+CREATE POLICY "delete_admin_storage" ON storage.objects
+  FOR DELETE TO authenticated
+  USING (bucket_id = 'voitures');
 
 -- =============================================
 -- Données de démonstration

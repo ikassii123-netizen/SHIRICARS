@@ -6,7 +6,6 @@ import Header from '../components/Header'
 import CatalogueClient from '../components/CatalogueClient'
 import ContactForm from '../components/ContactForm'
 
-// Chargement des voitures côté serveur (meilleur SEO + performance)
 async function getVoitures() {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -24,12 +23,27 @@ async function getVoitures() {
   return data || []
 }
 
+async function getParametres() {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  )
+  const { data } = await supabase
+    .from('parametres')
+    .select('cle, valeur')
+    .in('cle', ['nom_entreprise', 'slogan'])
+  if (!data?.length) return {}
+  return Object.fromEntries(data.map(r => [r.cle, r.valeur]))
+}
+
 export default async function HomePage() {
-  const voitures = await getVoitures()
+  const [voitures, params] = await Promise.all([getVoitures(), getParametres()])
+  const nomEntreprise = params.nom_entreprise || 'SY CAR'
+  const slogan = params.slogan || 'La confiance, avant tout'
 
   return (
     <div className="min-h-screen">
-      <Header />
+      <Header nomEntreprise={nomEntreprise} slogan={slogan} />
 
       {/* Hero */}
       <section className="bg-marine-900 text-white py-24 relative overflow-hidden">
@@ -68,8 +82,8 @@ export default async function HomePage() {
       {/* Footer */}
       <footer className="bg-marine-900 border-t border-marine-700 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-400 text-sm">
-          <div className="font-semibold text-white">SHIRI CARS</div>
-          <p>© {new Date().getFullYear()} SHIRI CARS — Tous droits réservés</p>
+          <div className="font-semibold text-white">{nomEntreprise}</div>
+          <p>© {new Date().getFullYear()} {nomEntreprise} — Tous droits réservés</p>
           <div className="flex gap-4">
             <Link href="/a-propos" className="hover:text-white transition-colors">Qui sommes-nous</Link>
             <Link href="/mentions-legales" className="hover:text-white transition-colors">Mentions légales</Link>

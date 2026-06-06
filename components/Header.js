@@ -2,8 +2,9 @@
 import Link from 'next/link'
 import { useState } from 'react'
 
-export default function Header() {
+export default function Header({ nomEntreprise = 'SY CAR', slogan = 'La confiance, avant tout' }) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const initiales = nomEntreprise.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
 
   return (
     <header className="bg-marine-900 text-white sticky top-0 z-50 shadow-xl">
@@ -12,11 +13,11 @@ export default function Header() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 group">
             <div className="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center font-black text-white text-sm group-hover:bg-red-500 transition-colors">
-              SC
+              {initiales}
             </div>
             <div className="leading-tight">
-              <div className="font-black text-lg tracking-wide">SHIRI CARS</div>
-              <div className="text-xs text-slate-400 font-medium">Véhicules Français</div>
+              <div className="font-black text-lg tracking-wide">{nomEntreprise}</div>
+              <div className="text-xs text-slate-400 font-medium">{slogan}</div>
             </div>
           </Link>
 

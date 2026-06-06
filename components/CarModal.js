@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 const PLACEHOLDER = 'https://images.unsplash.com/photo-1583267746897-2cf415887172?w=800&q=80'
 
@@ -13,10 +13,49 @@ function formatKm(n) {
 
 export default function CarModal({ voiture, onClose }) {
   const [photoIdx, setPhotoIdx] = useState(0)
+  const [fade, setFade] = useState(true)
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [zoomed, setZoomed] = useState(false)
+  const touchStartX = useRef(null)
+  const photoIdxRef = useRef(0)
+  const lightboxRef = useRef(false)
+  photoIdxRef.current = photoIdx
+  lightboxRef.current = lightboxOpen
+
+  const photos = voiture?.photos?.length ? voiture.photos : [PLACEHOLDER]
+
+  const goTo = (idx) => {
+    if (!fade) return
+    setFade(false)
+    setTimeout(() => { setPhotoIdx(idx); setFade(true) }, 150)
+  }
+
+  const openLightbox = () => { setLightboxOpen(true); setZoomed(false) }
+  const closeLightbox = () => { setLightboxOpen(false); setZoomed(false) }
+
+  const handleTouchStart = (e) => { touchStartX.current = e.touches[0].clientX }
+  const handleTouchEnd = (e) => {
+    if (touchStartX.current === null) return
+    const delta = e.changedTouches[0].clientX - touchStartX.current
+    if (Math.abs(delta) > 50) {
+      goTo(delta < 0
+        ? (photoIdxRef.current + 1) % photos.length
+        : (photoIdxRef.current - 1 + photos.length) % photos.length
+      )
+    }
+    touchStartX.current = null
+  }
 
   useEffect(() => {
     document.body.style.overflow = 'hidden'
-    const handler = e => { if (e.key === 'Escape') onClose() }
+    const handler = e => {
+      if (e.key === 'Escape') {
+        if (lightboxRef.current) closeLightbox()
+        else onClose()
+      }
+      if (e.key === 'ArrowRight') goTo((photoIdxRef.current + 1) % photos.length)
+      if (e.key === 'ArrowLeft') goTo((photoIdxRef.current - 1 + photos.length) % photos.length)
+    }
     window.addEventListener('keydown', handler)
     return () => {
       document.body.style.overflow = ''
@@ -26,132 +65,286 @@ export default function CarModal({ voiture, onClose }) {
 
   if (!voiture) return null
 
-  const photos = voiture.photos?.length ? voiture.photos : [PLACEHOLDER]
   const vendu = voiture.statut === 'vendu'
   const pct = voiture.prix_barre
     ? Math.round((1 - voiture.prix / voiture.prix_barre) * 100)
     : null
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-      onClick={e => { if (e.target === e.currentTarget) onClose() }}
-    >
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-start justify-between p-6 pb-0">
-          <div>
-            <h2 className="text-2xl font-black text-slate-900">
-              {voiture.marque} {voiture.modele}
-            </h2>
-            <p className="text-slate-500">{voiture.annee} · {formatKm(voiture.kilometrage)}</p>
+    <>
+      {/* Modal principal */}
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+        onClick={e => { if (e.target === e.currentTarget) onClose() }}
+      >
+        <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+          {/* Header */}
+          <div className="flex items-start justify-between p-6 pb-0">
+            <div>
+              <h2 className="text-2xl font-black text-slate-900">
+                {voiture.marque} {voiture.modele}
+              </h2>
+              <p className="text-slate-500">{voiture.annee} · {formatKm(voiture.kilometrage)}</p>
+            </div>
+            <button
+              onClick={onClose}
+              className="ml-4 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl p-2 transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
-          <button
-            onClick={onClose}
-            className="ml-4 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl p-2 transition-colors"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
 
-        <div className="p-6 space-y-6">
-          {/* Photos */}
-          <div>
-            <div className="relative rounded-2xl overflow-hidden h-64 bg-slate-100">
-              <img
-                src={photos[photoIdx]}
-                alt={`${voiture.marque} ${voiture.modele}`}
-                className="w-full h-full object-cover"
-                onError={e => { e.target.src = PLACEHOLDER }}
-              />
-              <div className="absolute top-3 left-3">
-                <span className={vendu ? 'badge-vendu' : 'badge-disponible'}>
-                  {vendu ? 'Vendu' : 'Disponible'}
-                </span>
+          <div className="p-6 space-y-6">
+            {/* Photos */}
+            <div>
+              <div
+                className="relative rounded-2xl overflow-hidden h-96 bg-slate-100 group"
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+              >
+                {/* Imagen principal — clic abre lightbox */}
+                <img
+                  src={photos[photoIdx]}
+                  alt={`${voiture.marque} ${voiture.modele}`}
+                  className="w-full h-full object-cover transition-opacity duration-150 cursor-zoom-in"
+                  style={{ opacity: fade ? 1 : 0 }}
+                  onClick={openLightbox}
+                  onError={e => { e.target.src = PLACEHOLDER }}
+                />
+
+                {/* Icono zoom (hint visual) */}
+                <div className="absolute bottom-3 right-3 z-10 bg-black/40 backdrop-blur-sm text-white rounded-lg px-2 py-1 text-xs font-medium flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                  </svg>
+                  Agrandir
+                </div>
+
+                {/* Badge statut */}
+                <div className="absolute top-3 left-3 z-10">
+                  <span className={vendu ? 'badge-vendu' : 'badge-disponible'}>
+                    {vendu ? 'Vendu' : 'Disponible'}
+                  </span>
+                </div>
+
+                {/* Contador */}
+                {photos.length > 1 && (
+                  <div className="absolute top-3 right-3 z-10 bg-black/50 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1 rounded-full">
+                    {photoIdx + 1} / {photos.length}
+                  </div>
+                )}
+
+                {/* Badge descuento (solo si 1 foto) */}
+                {pct && !vendu && photos.length === 1 && (
+                  <div className="absolute top-3 right-3 z-10 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-lg">
+                    -{pct}%
+                  </div>
+                )}
+
+                {/* Flecha PREV */}
+                {photos.length > 1 && (
+                  <button
+                    onClick={() => goTo((photoIdx - 1 + photos.length) % photos.length)}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-9 h-9 flex items-center justify-center bg-black/40 hover:bg-black/65 backdrop-blur-sm text-white rounded-full transition-all duration-200 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 active:scale-90"
+                    aria-label="Photo précédente"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                )}
+
+                {/* Flecha NEXT */}
+                {photos.length > 1 && (
+                  <button
+                    onClick={() => goTo((photoIdx + 1) % photos.length)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-9 h-9 flex items-center justify-center bg-black/40 hover:bg-black/65 backdrop-blur-sm text-white rounded-full transition-all duration-200 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 active:scale-90"
+                    aria-label="Photo suivante"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                )}
+
+                {/* Dots */}
+                {photos.length > 1 && (
+                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex gap-1.5">
+                    {photos.map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => goTo(i)}
+                        className={`rounded-full transition-all duration-200 ${
+                          i === photoIdx ? 'w-5 h-2 bg-white' : 'w-2 h-2 bg-white/50 hover:bg-white/75'
+                        }`}
+                        aria-label={`Photo ${i + 1}`}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Strip de thumbnails */}
+              {photos.length > 1 && (
+                <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
+                  {photos.map((p, i) => (
+                    <button key={i} onClick={() => goTo(i)} className="flex-shrink-0">
+                      <img
+                        src={p}
+                        alt={`${voiture.marque} ${voiture.modele} - photo ${i + 1}`}
+                        className={`w-16 h-12 object-cover rounded-lg border-2 transition-all duration-200 ${
+                          i === photoIdx
+                            ? 'border-red-500 scale-105 shadow-md'
+                            : 'border-transparent opacity-70 hover:opacity-100'
+                        }`}
+                        onError={e => { e.target.src = PLACEHOLDER }}
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Prix */}
+            <div className="bg-slate-50 rounded-2xl p-4 flex items-center justify-between">
+              <div>
+                <div className="text-sm text-slate-500 font-medium mb-1">Prix</div>
+                <div className="flex items-baseline gap-3">
+                  <span className={`text-3xl font-black ${vendu ? 'text-slate-400' : 'text-marine-700'}`}>
+                    {formatPrix(voiture.prix)}
+                  </span>
+                  {voiture.prix_barre && (
+                    <span className="text-slate-400 line-through text-base">
+                      {formatPrix(voiture.prix_barre)}
+                    </span>
+                  )}
+                </div>
               </div>
               {pct && !vendu && (
-                <div className="absolute top-3 right-3 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-lg">
+                <div className="bg-red-100 text-red-700 font-black text-xl px-4 py-2 rounded-xl">
                   -{pct}%
                 </div>
               )}
             </div>
-            {photos.length > 1 && (
-              <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
-                {photos.map((p, i) => (
-                  <button key={i} onClick={() => setPhotoIdx(i)}>
-                    <img
-                      src={p}
-                      className={`w-16 h-12 object-cover rounded-lg border-2 transition-all ${i === photoIdx ? 'border-blue-500 scale-105' : 'border-transparent'}`}
-                      onError={e => { e.target.src = PLACEHOLDER }}
-                    />
-                  </button>
+
+            {/* Caractéristiques */}
+            <div>
+              <h3 className="font-bold text-slate-900 mb-3">Caractéristiques</h3>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { label: 'Carburant', value: voiture.carburant },
+                  { label: 'Transmission', value: voiture.transmission },
+                  { label: 'Kilométrage', value: formatKm(voiture.kilometrage) },
+                  { label: 'Année', value: voiture.annee },
+                ].map(({ label, value }) => (
+                  <div key={label} className="bg-slate-50 rounded-xl p-3">
+                    <div className="text-xs text-slate-400 font-medium mb-1">{label}</div>
+                    <div className="font-semibold text-slate-800">{value}</div>
+                  </div>
                 ))}
               </div>
-            )}
-          </div>
-
-          {/* Prix */}
-          <div className="bg-slate-50 rounded-2xl p-4 flex items-center justify-between">
-            <div>
-              <div className="text-sm text-slate-500 font-medium mb-1">Prix</div>
-              <div className="flex items-baseline gap-3">
-                <span className={`text-3xl font-black ${vendu ? 'text-slate-400' : 'text-marine-700'}`}>
-                  {formatPrix(voiture.prix)}
-                </span>
-                {voiture.prix_barre && (
-                  <span className="text-slate-400 line-through text-base">
-                    {formatPrix(voiture.prix_barre)}
-                  </span>
-                )}
-              </div>
             </div>
-            {pct && !vendu && (
-              <div className="bg-red-100 text-red-700 font-black text-xl px-4 py-2 rounded-xl">
-                -{pct}%
+
+            {/* Description */}
+            {voiture.description && (
+              <div>
+                <h3 className="font-bold text-slate-900 mb-2">Description</h3>
+                <p className="text-slate-600 leading-relaxed">{voiture.description}</p>
               </div>
             )}
+
+            {/* CTA */}
+            {!vendu && (
+              <a
+                href="#contact"
+                onClick={onClose}
+                className="btn-primary w-full text-center block"
+              >
+                Je suis intéressé — Nous contacter
+              </a>
+            )}
           </div>
-
-          {/* Caractéristiques */}
-          <div>
-            <h3 className="font-bold text-slate-900 mb-3">Caractéristiques</h3>
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { label: 'Carburant', value: voiture.carburant },
-                { label: 'Transmission', value: voiture.transmission },
-                { label: 'Kilométrage', value: formatKm(voiture.kilometrage) },
-                { label: 'Année', value: voiture.annee },
-              ].map(({ label, value }) => (
-                <div key={label} className="bg-slate-50 rounded-xl p-3">
-                  <div className="text-xs text-slate-400 font-medium mb-1">{label}</div>
-                  <div className="font-semibold text-slate-800">{value}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Description */}
-          {voiture.description && (
-            <div>
-              <h3 className="font-bold text-slate-900 mb-2">Description</h3>
-              <p className="text-slate-600 leading-relaxed">{voiture.description}</p>
-            </div>
-          )}
-
-          {/* CTA */}
-          {!vendu && (
-            <a
-              href="#contact"
-              onClick={onClose}
-              className="btn-primary w-full text-center block"
-            >
-              Je suis intéressé — Nous contacter
-            </a>
-          )}
         </div>
       </div>
-    </div>
+
+      {/* Lightbox (pantalla completa con zoom) */}
+      {lightboxOpen && (
+        <div
+          className="fixed inset-0 z-[60] bg-black/95 flex items-center justify-center"
+          onClick={closeLightbox}
+        >
+          {/* Botón cerrar */}
+          <button
+            onClick={closeLightbox}
+            className="absolute top-4 right-4 z-10 w-10 h-10 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors"
+            aria-label="Fermer"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+
+          {/* Contador */}
+          {photos.length > 1 && (
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-white/10 backdrop-blur-sm text-white text-sm font-semibold px-3 py-1.5 rounded-full">
+              {photoIdx + 1} / {photos.length}
+            </div>
+          )}
+
+          {/* Imagen — clic alterna zoom */}
+          <div
+            className={`flex items-center justify-center transition-all duration-300 ${
+              zoomed ? 'overflow-auto w-full h-full' : 'max-w-[90vw] max-h-[85vh]'
+            }`}
+            onClick={e => e.stopPropagation()}
+          >
+            <img
+              src={photos[photoIdx]}
+              alt={`${voiture.marque} ${voiture.modele}`}
+              className={`transition-all duration-300 select-none ${
+                zoomed
+                  ? 'w-auto h-auto scale-150 cursor-zoom-out'
+                  : 'max-w-[90vw] max-h-[85vh] object-contain cursor-zoom-in'
+              }`}
+              onClick={() => setZoomed(z => !z)}
+              onError={e => { e.target.src = PLACEHOLDER }}
+            />
+          </div>
+
+          {/* Hint zoom */}
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/50 text-xs">
+            {zoomed ? 'Cliquez pour réduire' : 'Cliquez sur la photo pour zoomer'}
+          </div>
+
+          {/* Flecha PREV lightbox */}
+          {photos.length > 1 && (
+            <button
+              onClick={e => { e.stopPropagation(); goTo((photoIdx - 1 + photos.length) % photos.length) }}
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-11 h-11 flex items-center justify-center bg-white/10 hover:bg-white/25 text-white rounded-full transition-all duration-200 active:scale-90"
+              aria-label="Photo précédente"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+          )}
+
+          {/* Flecha NEXT lightbox */}
+          {photos.length > 1 && (
+            <button
+              onClick={e => { e.stopPropagation(); goTo((photoIdx + 1) % photos.length) }}
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-11 h-11 flex items-center justify-center bg-white/10 hover:bg-white/25 text-white rounded-full transition-all duration-200 active:scale-90"
+              aria-label="Photo suivante"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          )}
+        </div>
+      )}
+    </>
   )
 }

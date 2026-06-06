@@ -280,12 +280,14 @@ export default function AdminPage() {
         urls.push(publicUrl)
       } else {
         erreurs++
+        console.error('Erreur upload Supabase Storage:', error.message, error)
+        if (erreurs === 1) showToast(`Erreur upload : ${error.message}`, 'err')
       }
     }
     setForm(f => ({ ...f, photos: urls }))
     setUploading(false)
-    if (erreurs > 0) showToast(`${erreurs} photo(s) n'ont pas pu être envoyées. Réessayez.`, 'err')
-    else if (aUploader.length > 0) showToast('Photos envoyées avec succès')
+    if (erreurs > 1) showToast(`${erreurs} photo(s) n'ont pas pu être envoyées.`, 'err')
+    else if (erreurs === 0 && aUploader.length > 0) showToast('Photos envoyées avec succès')
   }
 
   async function handleSave(data) {
