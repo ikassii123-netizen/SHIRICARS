@@ -11,9 +11,13 @@ function formatPrix(n) {
 
 const CARBURANTS     = ['Essence', 'Diesel', 'Hybride', 'Hybride Rechargeable', 'Électrique']
 const TRANSMISSIONS  = ['Manuelle', 'Automatique', 'Semi-automatique']
+const COULEURS       = ['Blanc', 'Noir', 'Gris', 'Argent', 'Bleu', 'Rouge', 'Vert', 'Marron', 'Beige', 'Orange', 'Jaune', 'Violet', 'Autre']
+const NB_PORTES      = [2, 3, 4, 5]
 const VIDE = {
   marque: '', modele: '', annee: new Date().getFullYear(),
   kilometrage: 0, carburant: 'Essence', transmission: 'Manuelle',
+  couleur: '', puissance_cv: '', nb_portes: 5,
+  nb_proprietaires: '', controle_technique: '', cylindree: '', puissance_fiscale: '',
   prix: '', prix_barre: '', statut: 'disponible', description: '',
 }
 
@@ -74,10 +78,15 @@ function VoitureForm({ initial, onSave, onCancel, uploading, onUpload }) {
     e.preventDefault()
     await onSave({
       ...form,
-      annee:       parseInt(form.annee),
-      kilometrage: parseInt(form.kilometrage),
-      prix:        parseFloat(form.prix),
-      prix_barre:  form.prix_barre ? parseFloat(form.prix_barre) : null,
+      annee:             parseInt(form.annee),
+      kilometrage:       parseInt(form.kilometrage),
+      prix:              parseFloat(form.prix),
+      prix_barre:        form.prix_barre ? parseFloat(form.prix_barre) : null,
+      puissance_cv:      form.puissance_cv ? parseInt(form.puissance_cv) : null,
+      nb_portes:         form.nb_portes ? parseInt(form.nb_portes) : null,
+      nb_proprietaires:  form.nb_proprietaires ? parseInt(form.nb_proprietaires) : null,
+      cylindree:         form.cylindree ? parseInt(form.cylindree) : null,
+      puissance_fiscale: form.puissance_fiscale ? parseInt(form.puissance_fiscale) : null,
     })
   }
 
@@ -118,6 +127,45 @@ function VoitureForm({ initial, onSave, onCancel, uploading, onUpload }) {
           </select>
         </div>
         <div>
+          <label className="block text-sm font-semibold text-slate-700 mb-1">Couleur *</label>
+          <select required value={form.couleur} onChange={e => set('couleur', e.target.value)} className="input-field">
+            <option value="">— Sélectionner —</option>
+            {COULEURS.map(c => <option key={c}>{c}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 mb-1">Puissance (CV) *</label>
+          <input type="number" required min="1" max="2000" value={form.puissance_cv}
+            onChange={e => set('puissance_cv', e.target.value)} className="input-field" placeholder="130" />
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 mb-1">Nombre de portes *</label>
+          <select required value={form.nb_portes} onChange={e => set('nb_portes', e.target.value)} className="input-field">
+            {NB_PORTES.map(n => <option key={n} value={n}>{n} portes</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 mb-1">
+            Nombre de propriétaires <span className="text-slate-400 font-normal">optionnel</span>
+          </label>
+          <input type="number" min="1" max="20" value={form.nb_proprietaires}
+            onChange={e => set('nb_proprietaires', e.target.value)} className="input-field" placeholder="1" />
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 mb-1">
+            Cylindrée (cm³) <span className="text-slate-400 font-normal">optionnel</span>
+          </label>
+          <input type="number" min="0" value={form.cylindree}
+            onChange={e => set('cylindree', e.target.value)} className="input-field" placeholder="1598" />
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 mb-1">
+            Puissance fiscale (CV) <span className="text-slate-400 font-normal">optionnel</span>
+          </label>
+          <input type="number" min="1" max="100" value={form.puissance_fiscale}
+            onChange={e => set('puissance_fiscale', e.target.value)} className="input-field" placeholder="7" />
+        </div>
+        <div>
           <label className="block text-sm font-semibold text-slate-700 mb-1">Prix de vente (€) *</label>
           <input type="number" required min="0" step="100" value={form.prix}
             onChange={e => set('prix', e.target.value)} className="input-field" placeholder="18500" />
@@ -137,6 +185,14 @@ function VoitureForm({ initial, onSave, onCancel, uploading, onUpload }) {
             <option value="vendu">Vendu</option>
           </select>
         </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-semibold text-slate-700 mb-1">
+          Contrôle Technique <span className="text-slate-400 font-normal">optionnel</span>
+        </label>
+        <input value={form.controle_technique} onChange={e => set('controle_technique', e.target.value)}
+          className="input-field" placeholder="Valide jusqu'au 03/2026 · À faire · Non requis (véhicule neuf)" />
       </div>
 
       <div>

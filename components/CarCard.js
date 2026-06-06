@@ -24,6 +24,12 @@ const CARBURANT_ICON = {
   'Électrique': '⚡',
 }
 
+const COULEUR_DOT = {
+  'Blanc': '#F1F5F9', 'Noir': '#1E293B', 'Gris': '#94A3B8', 'Argent': '#CBD5E1',
+  'Bleu': '#3B82F6', 'Rouge': '#EF4444', 'Vert': '#22C55E', 'Marron': '#92400E',
+  'Beige': '#D4C5A9', 'Orange': '#F97316', 'Jaune': '#EAB308', 'Violet': '#8B5CF6',
+}
+
 export default function CarCard({ voiture, onClick }) {
   const [photoIdx, setPhotoIdx] = useState(0)
   const photos = voiture.photos?.length ? voiture.photos : [PLACEHOLDER]
@@ -144,6 +150,18 @@ export default function CarCard({ voiture, onClick }) {
           <span className={`text-xs bg-slate-100 px-2 py-1 rounded-lg font-medium ${vendu ? 'text-slate-400' : 'text-slate-600'}`}>
             {voiture.transmission}
           </span>
+          {voiture.puissance_cv && (
+            <span className={`text-xs bg-slate-100 px-2 py-1 rounded-lg font-medium ${vendu ? 'text-slate-400' : 'text-slate-600'}`}>
+              {voiture.puissance_cv} CV
+            </span>
+          )}
+          {voiture.couleur && (
+            <span className={`text-xs bg-slate-100 px-2 py-1 rounded-lg font-medium flex items-center gap-1.5 ${vendu ? 'text-slate-400' : 'text-slate-600'}`}>
+              <span className="w-2.5 h-2.5 rounded-full border border-slate-300 flex-shrink-0"
+                style={{ backgroundColor: COULEUR_DOT[voiture.couleur] || '#888' }} />
+              {voiture.couleur}
+            </span>
+          )}
         </div>
 
         {/* Price */}

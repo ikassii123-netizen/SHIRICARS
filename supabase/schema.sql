@@ -15,9 +15,16 @@ CREATE TABLE IF NOT EXISTS voitures (
   prix        DECIMAL(10,2) NOT NULL,
   prix_barre  DECIMAL(10,2),             -- Prix original avant remise (nullable)
   statut      TEXT NOT NULL DEFAULT 'disponible' CHECK (statut IN ('disponible', 'reserve', 'vendu')),
-  description TEXT,
-  photos      TEXT[] DEFAULT '{}',       -- Tableau d'URLs des photos
-  date_ajout  TIMESTAMPTZ DEFAULT now()
+  description        TEXT,
+  photos             TEXT[] DEFAULT '{}',
+  couleur            TEXT,
+  puissance_cv       INTEGER,
+  nb_portes          INTEGER DEFAULT 5,
+  nb_proprietaires   INTEGER,
+  controle_technique TEXT,
+  cylindree          INTEGER,
+  puissance_fiscale  INTEGER,
+  date_ajout         TIMESTAMPTZ DEFAULT now()
 );
 
 -- Table des messages de contact
@@ -104,6 +111,18 @@ CREATE POLICY "upload_admin_storage" ON storage.objects
 CREATE POLICY "delete_admin_storage" ON storage.objects
   FOR DELETE TO authenticated
   USING (bucket_id = 'voitures');
+
+-- =============================================
+-- Migration (si la table voitures existe déjà, exécutez ces lignes)
+-- =============================================
+
+ALTER TABLE voitures ADD COLUMN IF NOT EXISTS couleur TEXT;
+ALTER TABLE voitures ADD COLUMN IF NOT EXISTS puissance_cv INTEGER;
+ALTER TABLE voitures ADD COLUMN IF NOT EXISTS nb_portes INTEGER DEFAULT 5;
+ALTER TABLE voitures ADD COLUMN IF NOT EXISTS nb_proprietaires INTEGER;
+ALTER TABLE voitures ADD COLUMN IF NOT EXISTS controle_technique TEXT;
+ALTER TABLE voitures ADD COLUMN IF NOT EXISTS cylindree INTEGER;
+ALTER TABLE voitures ADD COLUMN IF NOT EXISTS puissance_fiscale INTEGER;
 
 -- =============================================
 -- Données de démonstration

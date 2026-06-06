@@ -409,13 +409,28 @@ export default function CarModal({ voiture, onClose, whatsapp = '', onFilterDisp
                   { label: 'Transmission', value: voiture.transmission },
                   { label: 'Kilométrage', value: formatKm(voiture.kilometrage) },
                   { label: 'Année', value: voiture.annee },
-                ].map(({ label, value }) => (
+                  voiture.couleur         ? { label: 'Couleur', value: voiture.couleur } : null,
+                  voiture.puissance_cv    ? { label: 'Puissance', value: `${voiture.puissance_cv} CV` } : null,
+                  voiture.nb_portes       ? { label: 'Portes', value: `${voiture.nb_portes} portes` } : null,
+                  voiture.nb_proprietaires ? { label: 'Propriétaires', value: voiture.nb_proprietaires === 1 ? '1ère main' : `${voiture.nb_proprietaires} propriétaires` } : null,
+                  voiture.cylindree       ? { label: 'Cylindrée', value: `${voiture.cylindree} cm³` } : null,
+                  voiture.puissance_fiscale ? { label: 'Puiss. fiscale', value: `${voiture.puissance_fiscale} CV` } : null,
+                ].filter(Boolean).map(({ label, value }) => (
                   <div key={label} className="bg-slate-50 rounded-xl p-3">
                     <div className="text-xs text-slate-400 font-medium mb-1">{label}</div>
                     <div className="font-semibold text-slate-800">{value}</div>
                   </div>
                 ))}
               </div>
+              {voiture.controle_technique && (
+                <div className="mt-3 bg-slate-50 rounded-xl p-3 flex items-center gap-2">
+                  <span className="text-lg">🔧</span>
+                  <div>
+                    <div className="text-xs text-slate-400 font-medium">Contrôle Technique</div>
+                    <div className="font-semibold text-slate-800">{voiture.controle_technique}</div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Description */}
