@@ -233,6 +233,7 @@ export default function AdminPage() {
   const [showResendKey, setShowResendKey] = useState(false)
   const [savingParams, setSavingParams] = useState(false)
   const [confirmModal, setConfirmModal] = useState(null)
+  const [storageInfo, setStorageInfo] = useState(null)
 
   const showToast = (msg, type = 'ok') => {
     setToast({ msg, type })
@@ -277,9 +278,18 @@ export default function AdminPage() {
     }
   }, [])
 
+  const loadStorageInfo = useCallback(async () => {
+    const { data: files } = await supabase.storage.from('voitures').list('', { limit: 1000 })
+    if (!files) return
+    const totalBytes = files.reduce((sum, f) => sum + (f.metadata?.size || 0), 0)
+    const usedMB = totalBytes / (1024 * 1024)
+    const limitMB = 1024
+    setStorageInfo({ usedMB, pct: Math.min(Math.round((usedMB / limitMB) * 100), 100), files: files.length })
+  }, [])
+
   useEffect(() => {
-    if (session) { loadVoitures(); loadContacts(); loadParametres() }
-  }, [session, loadVoitures, loadContacts, loadParametres])
+    if (session) { loadVoitures(); loadContacts(); loadParametres(); loadStorageInfo() }
+  }, [session, loadVoitures, loadContacts, loadParametres, loadStorageInfo])
 
   async function saveParametres(e) {
     e.preventDefault()
@@ -504,6 +514,29 @@ export default function AdminPage() {
               ⚙️ Paramètres du Site
             </button>
           </nav>
+
+          {/* Storage Supabase */}
+          {storageInfo && (
+            <div className="px-4 pb-3 border-t border-marine-700 pt-4">
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-xs text-slate-400 font-medium">Stock photos</span>
+                <span className={`text-xs font-bold ${storageInfo.pct > 80 ? 'text-red-400' : storageInfo.pct > 50 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                  {storageInfo.pct}%
+                </span>
+              </div>
+              <div className="w-full bg-marine-700 rounded-full h-1.5 mb-1">
+                <div
+                  className={`h-1.5 rounded-full transition-all ${storageInfo.pct > 80 ? 'bg-red-500' : storageInfo.pct > 50 ? 'bg-amber-400' : 'bg-emerald-500'}`}
+                  style={{ width: `${storageInfo.pct}%` }}
+                />
+              </div>
+              <p className="text-[11px] text-slate-500">
+                {storageInfo.usedMB < 1
+                  ? `${Math.round(storageInfo.usedMB * 1024)} Ko`
+                  : `${storageInfo.usedMB.toFixed(1)} Mo`} / 1 Go — {storageInfo.files} fichier{storageInfo.files !== 1 ? 's' : ''}
+              </p>
+            </div>
+          )}
 
           <div className="p-4 border-t border-marine-700">
             <Link href="/" className="flex items-center gap-2 text-slate-400 hover:text-white text-sm mb-3 transition-colors">
