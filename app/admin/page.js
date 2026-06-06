@@ -45,7 +45,7 @@ function LoginForm({ onLogin }) {
           <div>
             <label className="block text-sm font-semibold text-slate-700 mb-1">Email</label>
             <input type="email" required value={email} onChange={e => setEmail(e.target.value)}
-              className="input-field" placeholder="admin@shiricars.fr" />
+              className="input-field" placeholder="admin@sycar.fr" />
           </div>
           <div>
             <label className="block text-sm font-semibold text-slate-700 mb-1">Mot de passe</label>
@@ -351,7 +351,7 @@ export default function AdminPage() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `shiricars-backup-${new Date().toISOString().slice(0, 10)}.json`
+    a.download = `sycar-backup-${new Date().toISOString().slice(0, 10)}.json`
     a.click()
     URL.revokeObjectURL(url)
     showToast('Sauvegarde téléchargée avec succès')
