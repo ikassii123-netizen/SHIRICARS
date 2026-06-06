@@ -32,9 +32,12 @@ export default function CarModal({ voiture, onClose, whatsapp = '', onFilterDisp
   const zoomScaleRef = useRef(1)
   const panXRef = useRef(0)
   const panYRef = useRef(0)
+  const baseDisplaySizeRef = useRef(null)
+  const swipeLightboxStartRef = useRef(null)
   zoomScaleRef.current = zoomScale
   panXRef.current = panX
   panYRef.current = panY
+  baseDisplaySizeRef.current = baseDisplaySize
   photoIdxRef.current = photoIdx
   lightboxRef.current = lightboxOpen
 
@@ -106,15 +109,31 @@ export default function CarModal({ voiture, onClose, whatsapp = '', onFilterDisp
       return Math.sqrt(dx * dx + dy * dy)
     }
 
+    const clampRef = (px, py, scale) => {
+      const bds = baseDisplaySizeRef.current
+      if (!bds) return { px, py }
+      const maxX = Math.max(0, (bds.w * scale - window.innerWidth) / 2)
+      const maxY = Math.max(0, (bds.h * scale - window.innerHeight) / 2)
+      return {
+        px: Math.max(-maxX, Math.min(maxX, px)),
+        py: Math.max(-maxY, Math.min(maxY, py)),
+      }
+    }
+
     const onTouchStart = (e) => {
       if (e.touches.length === 2) {
         e.preventDefault()
         pinchStartRef.current = { distance: getPinchDist(e.touches), scale: zoomScaleRef.current }
-      } else if (e.touches.length === 1 && zoomScaleRef.current > 1) {
-        e.preventDefault()
-        const t = e.touches[0]
-        isDraggingRef.current = true
-        dragStartRef.current = { x: t.clientX - panXRef.current, y: t.clientY - panYRef.current }
+        swipeLightboxStartRef.current = null
+      } else if (e.touches.length === 1) {
+        if (zoomScaleRef.current > 1) {
+          e.preventDefault()
+          const t = e.touches[0]
+          isDraggingRef.current = true
+          dragStartRef.current = { x: t.clientX - panXRef.current, y: t.clientY - panYRef.current }
+        } else {
+          swipeLightboxStartRef.current = e.touches[0].clientX
+        }
       }
     }
 
@@ -125,7 +144,7 @@ export default function CarModal({ voiture, onClose, whatsapp = '', onFilterDisp
         const newScale = Math.min(4, Math.max(1, pinchStartRef.current.scale * (newDist / pinchStartRef.current.distance)))
         if (newScale <= 1) { setZoomScale(1); setPanX(0); setPanY(0) }
         else {
-          const clamped = clampPan(panXRef.current, panYRef.current, newScale)
+          const clamped = clampRef(panXRef.current, panYRef.current, newScale)
           setZoomScale(newScale)
           setPanX(clamped.px)
           setPanY(clamped.py)
@@ -133,7 +152,7 @@ export default function CarModal({ voiture, onClose, whatsapp = '', onFilterDisp
       } else if (e.touches.length === 1 && isDraggingRef.current && zoomScaleRef.current > 1) {
         e.preventDefault()
         const raw = { px: e.touches[0].clientX - dragStartRef.current.x, py: e.touches[0].clientY - dragStartRef.current.y }
-        const clamped = clampPan(raw.px, raw.py, zoomScaleRef.current)
+        const clamped = clampRef(raw.px, raw.py, zoomScaleRef.current)
         setPanX(clamped.px)
         setPanY(clamped.py)
       }
@@ -141,7 +160,23 @@ export default function CarModal({ voiture, onClose, whatsapp = '', onFilterDisp
 
     const onTouchEnd = (e) => {
       if (e.touches.length < 2) pinchStartRef.current = null
-      if (e.touches.length === 0) { isDraggingRef.current = false; setIsDragging(false) }
+      if (e.touches.length === 0) {
+        isDraggingRef.current = false
+        setIsDragging(false)
+        // Swipe para navegar fotos (solo cuando no hay zoom)
+        if (swipeLightboxStartRef.current !== null && zoomScaleRef.current <= 1) {
+          const delta = e.changedTouches[0].clientX - swipeLightboxStartRef.current
+          if (Math.abs(delta) > 50) {
+            const total = photos.length
+            const next = delta < 0
+              ? (photoIdxRef.current + 1) % total
+              : (photoIdxRef.current - 1 + total) % total
+            setPhotoIdx(next)
+            photoIdxRef.current = next
+          }
+        }
+        swipeLightboxStartRef.current = null
+      }
     }
 
     document.addEventListener('touchstart', onTouchStart, { passive: false })
@@ -489,7 +524,7 @@ export default function CarModal({ voiture, onClose, whatsapp = '', onFilterDisp
 
           {/* Hint */}
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/40 text-xs text-center pointer-events-none">
-            {zoomScale > 1 ? 'Glissez pour explorer · Cliquez pour réinitialiser' : 'Cliquez sur la photo pour zoomer'}
+            {zoomScale > 1 ? 'Glissez pour explorer · Appuyez pour réinitialiser' : 'Pincez pour zoomer · Glissez pour naviguer'}
           </div>
 
           {/* Flechas */}
