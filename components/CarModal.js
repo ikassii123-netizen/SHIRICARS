@@ -343,11 +343,12 @@ export default function CarModal({ voiture, onClose, whatsapp = '', onFilterDisp
             </div>
 
             {/* Prix */}
+            {!vendu && (
             <div className="bg-slate-50 rounded-2xl p-4 flex items-center justify-between">
               <div>
                 <div className="text-sm text-slate-500 font-medium mb-1">Prix</div>
                 <div className="flex items-baseline gap-3">
-                  <span className={`text-3xl font-black ${vendu ? 'text-slate-400' : 'text-marine-700'}`}>
+                  <span className="text-3xl font-black text-marine-700">
                     {formatPrix(voiture.prix)}
                   </span>
                   {voiture.prix_barre && voiture.prix_barre !== voiture.prix && (
@@ -357,12 +358,13 @@ export default function CarModal({ voiture, onClose, whatsapp = '', onFilterDisp
                   )}
                 </div>
               </div>
-              {pct && !vendu && (
+              {pct && (
                 <div className={`font-black text-xl px-4 py-2 rounded-xl ${pct < 0 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
                   {pct > 0 ? `+${pct}%` : `${pct}%`}
                 </div>
               )}
             </div>
+            )}
 
             {/* Caractéristiques */}
             <div>

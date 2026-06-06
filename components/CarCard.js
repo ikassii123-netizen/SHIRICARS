@@ -147,16 +147,18 @@ export default function CarCard({ voiture, onClick }) {
         </div>
 
         {/* Price */}
-        <div className="flex items-baseline gap-3">
-          <span className={`text-2xl font-black ${vendu ? 'text-slate-500 line-through' : 'text-marine-700'}`}>
-            {formatPrix(voiture.prix)}
-          </span>
-          {!vendu && voiture.prix_barre && voiture.prix_barre !== voiture.prix && (
-            <span className="text-slate-400 line-through text-sm font-medium">
-              {formatPrix(voiture.prix_barre)}
+        {!vendu && (
+          <div className="flex items-baseline gap-3">
+            <span className="text-2xl font-black text-marine-700">
+              {formatPrix(voiture.prix)}
             </span>
-          )}
-        </div>
+            {voiture.prix_barre && voiture.prix_barre !== voiture.prix && (
+              <span className="text-slate-400 line-through text-sm font-medium">
+                {formatPrix(voiture.prix_barre)}
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </article>
   )
