@@ -28,18 +28,25 @@ export default function ContactForm() {
   async function handleSubmit(e) {
     e.preventDefault()
     setEtat('loading')
-    const { error } = await supabase.from('contacts').insert([{
+    const payload = {
       prenom:    form.prenom,
       nom:       form.nom,
       email:     form.email,
       telephone: form.telephone || null,
       message:   form.message,
-    }])
-    if (error) setEtat('error')
-    else {
-      setEtat('success')
-      setForm({ prenom: '', nom: '', email: '', telephone: '', message: '' })
     }
+    const { error } = await supabase.from('contacts').insert([payload])
+    if (error) { setEtat('error'); return }
+
+    // Notification email (silencieuse si non configuré)
+    fetch('/api/contact', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }).catch(() => {})
+
+    setEtat('success')
+    setForm({ prenom: '', nom: '', email: '', telephone: '', message: '' })
   }
 
   const coordonnees = [
@@ -48,6 +55,8 @@ export default function ContactForm() {
     { icon: '✉️', title: 'Email',     value: infos.email },
     { icon: '🕐', title: 'Horaires',  value: infos.horaires },
   ]
+
+  const adresseEncode = encodeURIComponent(infos.adresse || 'Arras, France')
 
   return (
     <section id="contact" className="bg-marine-900 text-white py-20">
@@ -73,6 +82,20 @@ export default function ContactForm() {
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Google Maps */}
+            <div className="mt-8 rounded-2xl overflow-hidden border border-marine-700">
+              <iframe
+                title="Localisation SHIRI CARS"
+                width="100%"
+                height="220"
+                style={{ border: 0 }}
+                loading="lazy"
+                allowFullScreen
+                referrerPolicy="no-referrer-when-downgrade"
+                src={`https://maps.google.com/maps?q=${adresseEncode}&output=embed&z=14`}
+              />
             </div>
           </div>
 

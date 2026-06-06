@@ -1,4 +1,7 @@
+export const dynamic = 'force-dynamic'
+
 import { createClient } from '@supabase/supabase-js'
+import Link from 'next/link'
 import Header from '../components/Header'
 import CatalogueClient from '../components/CatalogueClient'
 import ContactForm from '../components/ContactForm'
@@ -67,7 +70,10 @@ export default async function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-400 text-sm">
           <div className="font-semibold text-white">SHIRI CARS</div>
           <p>© {new Date().getFullYear()} SHIRI CARS — Tous droits réservés</p>
-          <p>Véhicules Français d'Exception</p>
+          <div className="flex gap-4">
+            <Link href="/a-propos" className="hover:text-white transition-colors">Qui sommes-nous</Link>
+            <Link href="/mentions-legales" className="hover:text-white transition-colors">Mentions légales</Link>
+          </div>
         </div>
       </footer>
     </div>

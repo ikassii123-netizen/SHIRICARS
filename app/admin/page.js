@@ -1,4 +1,5 @@
 'use client'
+export const dynamic = 'force-dynamic'
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
 import Link from 'next/link'
@@ -146,28 +147,37 @@ function VoitureForm({ initial, onSave, onCancel, uploading, onUpload }) {
       {/* Upload photos */}
       <div>
         <label className="block text-sm font-semibold text-slate-700 mb-2">Photos</label>
-        <label className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-6 cursor-pointer transition-colors ${uploading ? 'border-blue-300 bg-blue-50' : 'border-slate-200 hover:border-blue-300 hover:bg-slate-50'}`}>
-          <svg className="w-8 h-8 text-slate-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-          <span className="text-sm text-slate-500">{uploading ? 'Envoi en cours...' : 'Cliquez pour ajouter des photos'}</span>
-          <input type="file" accept="image/*" multiple className="hidden"
-            onChange={e => onUpload(e.target.files, form, f => setForm(f))} disabled={uploading} />
-        </label>
+
+        {/* Photos existantes */}
         {form.photos?.length > 0 && (
-          <div className="flex gap-2 mt-3 flex-wrap">
-            {form.photos.map((url, i) => (
-              <div key={i} className="relative group">
-                <img src={url} className="w-20 h-14 object-cover rounded-lg border border-slate-200" />
-                <button type="button"
-                  onClick={() => set('photos', form.photos.filter((_, j) => j !== i))}
-                  className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  ×
-                </button>
-              </div>
-            ))}
+          <div className="mb-3">
+            <p className="text-xs text-slate-400 mb-2">{form.photos.length} photo{form.photos.length !== 1 ? 's' : ''} jointe{form.photos.length !== 1 ? 's' : ''} — survolez pour supprimer</p>
+            <div className="flex gap-2 flex-wrap">
+              {form.photos.map((url, i) => (
+                <div key={i} className="relative group">
+                  <img src={url} className="w-24 h-16 object-cover rounded-lg border border-slate-200" />
+                  <button type="button"
+                    onClick={() => set('photos', form.photos.filter((_, j) => j !== i))}
+                    className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
         )}
+
+        {/* Zone pour ajouter des photos */}
+        <label className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-5 cursor-pointer transition-colors ${uploading ? 'border-blue-300 bg-blue-50' : 'border-slate-200 hover:border-blue-300 hover:bg-slate-50'}`}>
+          <svg className="w-7 h-7 text-slate-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <span className="text-sm text-slate-500">
+            {uploading ? 'Envoi en cours...' : form.photos?.length > 0 ? '+ Ajouter d\'autres photos' : 'Cliquez pour ajouter des photos'}
+          </span>
+          <input type="file" accept=".jpg,.jpeg,.png,.webp,.avif,.gif,.bmp,.tiff" multiple className="hidden"
+            onChange={e => onUpload(e.target.files, form, f => setForm(f))} disabled={uploading} />
+        </label>
       </div>
 
       <div className="flex gap-3 pt-2">
@@ -192,8 +202,9 @@ export default function AdminPage() {
   const [onglet, setOnglet]         = useState('voitures') // voitures | messages | parametres
   const [toast, setToast]           = useState(null)
   const [parametres, setParametres] = useState({
-    nom_entreprise: '', slogan: '', adresse: '', telephone: '', email: '', horaires: ''
+    titre_site: '', description_site: '', nom_entreprise: '', slogan: '', adresse: '', telephone: '', email: '', horaires: '', resend_api_key: '', whatsapp: '', whatsapp_message: '', siret: '', tva: '', directeur_publication: ''
   })
+  const [showResendKey, setShowResendKey] = useState(false)
   const [savingParams, setSavingParams] = useState(false)
 
   const showToast = (msg, type = 'ok') => {
@@ -245,19 +256,35 @@ export default function AdminPage() {
   }
 
   async function handleUpload(files, form, setForm) {
+    const FORMATOS_VALIDOS = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif', 'image/bmp', 'image/tiff']
+    const lista = Array.from(files)
+
+    const invalidos = lista.filter(f => !FORMATOS_VALIDOS.includes(f.type))
+    if (invalidos.length) {
+      const nombres = invalidos.map(f => f.name).join(', ')
+      showToast(`Format non compatible : ${nombres}. Utilisez JPG, PNG, WebP ou AVIF.`, 'err')
+      const validos = lista.filter(f => FORMATOS_VALIDOS.includes(f.type))
+      if (!validos.length) return
+    }
+
     setUploading(true)
     const urls = [...(form.photos || [])]
-    for (const file of Array.from(files)) {
+    let errores = 0
+    for (const file of lista.filter(f => FORMATOS_VALIDOS.includes(f.type))) {
       const ext  = file.name.split('.').pop()
       const name = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
       const { data, error } = await supabase.storage.from('voitures').upload(name, file, { upsert: false })
       if (!error) {
         const { data: { publicUrl } } = supabase.storage.from('voitures').getPublicUrl(data.path)
         urls.push(publicUrl)
+      } else {
+        errores++
       }
     }
     setForm(f => ({ ...f, photos: urls }))
     setUploading(false)
+    if (errores > 0) showToast(`${errores} photo(s) n'ont pas pu être envoyées. Réessayez.`, 'err')
+    else if (lista.filter(f => FORMATOS_VALIDOS.includes(f.type)).length > 0) showToast('Photos envoyées avec succès')
   }
 
   async function handleSave(data) {
@@ -293,6 +320,28 @@ export default function AdminPage() {
   async function handleLogout() {
     await supabase.auth.signOut()
     setMode('liste')
+  }
+
+  async function handleBackup() {
+    const [{ data: v }, { data: c }, { data: p }] = await Promise.all([
+      supabase.from('voitures').select('*').order('date_ajout', { ascending: false }),
+      supabase.from('contacts').select('*').order('date_envoi', { ascending: false }),
+      supabase.from('parametres').select('*'),
+    ])
+    const backup = {
+      date: new Date().toISOString(),
+      voitures: v || [],
+      contacts: c || [],
+      parametres: p || [],
+    }
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `shiricars-backup-${new Date().toISOString().slice(0, 10)}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+    showToast('Sauvegarde téléchargée avec succès')
   }
 
   if (loading) {
@@ -360,6 +409,12 @@ export default function AdminPage() {
             <Link href="/" className="flex items-center gap-2 text-slate-400 hover:text-white text-sm mb-3 transition-colors">
               ← Voir le site
             </Link>
+            <button
+              onClick={handleBackup}
+              className="w-full text-left text-slate-400 hover:text-emerald-400 text-sm transition-colors mb-2"
+            >
+              💾 Sauvegarder les données
+            </button>
             <button
               onClick={handleLogout}
               className="w-full text-left text-slate-400 hover:text-red-400 text-sm transition-colors"
@@ -467,8 +522,49 @@ export default function AdminPage() {
               <form onSubmit={saveParametres} className="space-y-6 max-w-2xl">
 
                 <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
+                  <h2 className="font-bold text-slate-900 mb-4">🌐 Titre de la page (onglet navigateur)</h2>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-1">Titre de la page</label>
+                      <input value={parametres.titre_site}
+                        onChange={e => setParametres(p => ({ ...p, titre_site: e.target.value }))}
+                        className="input-field" placeholder="SHIRI CARS — Véhicules Français d'Exception" />
+                      <p className="text-xs text-slate-400 mt-1">Texte affiché dans l'onglet du navigateur</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-1">Description (SEO)</label>
+                      <textarea rows={2} value={parametres.description_site}
+                        onChange={e => setParametres(p => ({ ...p, description_site: e.target.value }))}
+                        className="input-field resize-none" placeholder="Découvrez notre sélection de voitures françaises de qualité..." />
+                      <p className="text-xs text-slate-400 mt-1">Visible dans les résultats Google</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
                   <h2 className="font-bold text-slate-900 mb-4">🏢 Identité de l'entreprise</h2>
                   <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-1">Numéro SIRET</label>
+                      <input value={parametres.siret}
+                        onChange={e => setParametres(p => ({ ...p, siret: e.target.value }))}
+                        className="input-field" placeholder="XXX XXX XXX XXXXX" />
+                      <p className="text-xs text-slate-400 mt-1">Affiché dans les mentions légales</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-1">Numéro de TVA intracommunautaire</label>
+                      <input value={parametres.tva}
+                        onChange={e => setParametres(p => ({ ...p, tva: e.target.value }))}
+                        className="input-field" placeholder="FR XX XXX XXX XXX" />
+                      <p className="text-xs text-slate-400 mt-1">Uniquement si vous êtes SARL/SAS — pas nécessaire en auto-entrepreneur</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-1">Directeur de publication</label>
+                      <input value={parametres.directeur_publication}
+                        onChange={e => setParametres(p => ({ ...p, directeur_publication: e.target.value }))}
+                        className="input-field" placeholder="Prénom Nom" />
+                      <p className="text-xs text-slate-400 mt-1">Votre nom complet</p>
+                    </div>
                     <div>
                       <label className="block text-sm font-semibold text-slate-700 mb-1">Nom de l'entreprise</label>
                       <input value={parametres.nom_entreprise}
@@ -500,16 +596,56 @@ export default function AdminPage() {
                         className="input-field" placeholder="+33 1 23 45 67 89" />
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-1">✉️ Email</label>
+                      <label className="block text-sm font-semibold text-slate-700 mb-1">✉️ Email (Gmail)</label>
                       <input type="email" value={parametres.email}
                         onChange={e => setParametres(p => ({ ...p, email: e.target.value }))}
-                        className="input-field" placeholder="contact@shiricars.fr" />
+                        className="input-field" placeholder="contact@gmail.com" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-1">🔑 Clé API Resend (notifications email)</label>
+                      <div className="relative">
+                        <input
+                          type={showResendKey ? 'text' : 'password'}
+                          value={parametres.resend_api_key}
+                          onChange={e => setParametres(p => ({ ...p, resend_api_key: e.target.value }))}
+                          className="input-field pr-12"
+                          placeholder="re_xxxxxxxxxxxxxxxxxxxx"
+                        />
+                        <button type="button" onClick={() => setShowResendKey(v => !v)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                          {showResendKey ? '🙈' : '👁️'}
+                        </button>
+                      </div>
+                      <p className="text-xs text-slate-400 mt-1">
+                        Disponible sur <strong>resend.com</strong> → API Keys. Une fois configuré, vous et votre client recevrez automatiquement un email à chaque nouvelle demande de contact.
+                      </p>
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-slate-700 mb-1">🕐 Horaires d'ouverture</label>
                       <input value={parametres.horaires}
                         onChange={e => setParametres(p => ({ ...p, horaires: e.target.value }))}
                         className="input-field" placeholder="Lundi – Samedi : 9h00 – 19h00" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
+                  <h2 className="font-bold text-slate-900 mb-4">💬 WhatsApp</h2>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-1">Numéro WhatsApp</label>
+                      <input value={parametres.whatsapp}
+                        onChange={e => setParametres(p => ({ ...p, whatsapp: e.target.value }))}
+                        className="input-field" placeholder="+33 6 12 34 56 78" />
+                      <p className="text-xs text-slate-400 mt-1">Si vide, utilise le numéro de téléphone principal</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-1">Message pré-rempli</label>
+                      <textarea rows={3} value={parametres.whatsapp_message}
+                        onChange={e => setParametres(p => ({ ...p, whatsapp_message: e.target.value }))}
+                        className="input-field resize-none"
+                        placeholder="Bonjour, je suis intéressé(e) par un de vos véhicules..." />
+                      <p className="text-xs text-slate-400 mt-1">Texte qui apparaît automatiquement quand le client clique sur le bouton WhatsApp</p>
                     </div>
                   </div>
                 </div>
