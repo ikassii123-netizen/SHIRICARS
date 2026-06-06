@@ -403,34 +403,29 @@ export default function CarModal({ voiture, onClose, whatsapp = '', onFilterDisp
             {/* Caractéristiques */}
             <div>
               <h3 className="font-bold text-slate-900 mb-3">Caractéristiques</h3>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-2xl border border-slate-100 overflow-hidden divide-y divide-slate-100">
                 {[
-                  { label: 'Carburant', value: voiture.carburant },
-                  { label: 'Transmission', value: voiture.transmission },
-                  { label: 'Kilométrage', value: formatKm(voiture.kilometrage) },
-                  { label: 'Année', value: voiture.annee },
-                  voiture.couleur         ? { label: 'Couleur', value: voiture.couleur } : null,
-                  voiture.puissance_cv    ? { label: 'Puissance', value: `${voiture.puissance_cv} CV` } : null,
-                  voiture.nb_portes       ? { label: 'Portes', value: `${voiture.nb_portes} portes` } : null,
-                  voiture.nb_proprietaires ? { label: 'Propriétaires', value: voiture.nb_proprietaires === 1 ? '1ère main' : `${voiture.nb_proprietaires} propriétaires` } : null,
-                  voiture.cylindree       ? { label: 'Cylindrée', value: `${voiture.cylindree} cm³` } : null,
-                  voiture.puissance_fiscale ? { label: 'Puiss. fiscale', value: `${voiture.puissance_fiscale} CV` } : null,
-                ].filter(Boolean).map(({ label, value }) => (
-                  <div key={label} className="bg-slate-50 rounded-xl p-3">
-                    <div className="text-xs text-slate-400 font-medium mb-1">{label}</div>
-                    <div className="font-semibold text-slate-800">{value}</div>
+                  { icon: '⛽', label: 'Carburant',           value: voiture.carburant },
+                  { icon: '⚙️', label: 'Transmission',        value: voiture.transmission },
+                  { icon: '📏', label: 'Kilométrage',          value: formatKm(voiture.kilometrage) },
+                  { icon: '📅', label: 'Année',               value: voiture.annee },
+                  voiture.couleur           ? { icon: '🎨', label: 'Couleur',             value: voiture.couleur } : null,
+                  voiture.puissance_cv      ? { icon: '⚡', label: 'Puissance',           value: `${voiture.puissance_cv} CV` } : null,
+                  voiture.nb_portes         ? { icon: '🚪', label: 'Portes',              value: `${voiture.nb_portes} portes` } : null,
+                  voiture.nb_proprietaires  ? { icon: '👤', label: 'Propriétaires',       value: voiture.nb_proprietaires === 1 ? '1ère main' : `${voiture.nb_proprietaires} propriétaires` } : null,
+                  voiture.cylindree         ? { icon: '🔩', label: 'Cylindrée',           value: `${voiture.cylindree} cm³` } : null,
+                  voiture.puissance_fiscale ? { icon: '📋', label: 'Puiss. fiscale',      value: `${voiture.puissance_fiscale} CV fiscaux` } : null,
+                  voiture.controle_technique ? { icon: '🔧', label: 'Contrôle Technique', value: voiture.controle_technique } : null,
+                ].filter(Boolean).map(({ icon, label, value }) => (
+                  <div key={label} className="flex items-center justify-between px-4 py-3 bg-white hover:bg-slate-50 transition-colors">
+                    <span className="flex items-center gap-2.5 text-sm text-slate-500 font-medium">
+                      <span className="text-base w-5 text-center">{icon}</span>
+                      {label}
+                    </span>
+                    <span className="text-sm font-bold text-slate-800">{value}</span>
                   </div>
                 ))}
               </div>
-              {voiture.controle_technique && (
-                <div className="mt-3 bg-slate-50 rounded-xl p-3 flex items-center gap-2">
-                  <span className="text-lg">🔧</span>
-                  <div>
-                    <div className="text-xs text-slate-400 font-medium">Contrôle Technique</div>
-                    <div className="font-semibold text-slate-800">{voiture.controle_technique}</div>
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* Description */}
