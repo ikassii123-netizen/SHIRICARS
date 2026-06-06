@@ -12,8 +12,8 @@ function formatKm(n) {
 }
 
 function remise(prixBarre, prix) {
-  if (!prixBarre) return null
-  return Math.round((1 - prix / prixBarre) * 100)
+  if (!prixBarre || prixBarre === prix) return null
+  return Math.round(((prix - prixBarre) / prixBarre) * 100)
 }
 
 const CARBURANT_ICON = {
@@ -78,10 +78,10 @@ export default function CarCard({ voiture, onClick }) {
           </span>
         </div>
 
-        {/* Remise badge */}
+        {/* Badge variation prix */}
         {pct && !indispo && (
-          <div className="absolute top-3 right-3 z-10 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-lg">
-            -{pct}%
+          <div className={`absolute top-3 right-3 z-10 text-white text-xs font-bold px-2 py-1 rounded-lg ${pct < 0 ? 'bg-red-600' : 'bg-green-600'}`}>
+            {pct > 0 ? `+${pct}%` : `${pct}%`}
           </div>
         )}
 
