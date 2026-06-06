@@ -56,7 +56,7 @@ export default function ContactForm() {
   const coordonnees = [
     { icon: '📍', title: 'Adresse',   value: infos.adresse },
     { icon: '📞', title: 'Téléphone', value: infos.telephone },
-    { icon: '✉️', title: 'Email',     value: infos.email },
+    { icon: '📧', title: 'Email',     value: infos.email },
     { icon: '🕐', title: 'Horaires',  value: infos.horaires },
   ]
 
