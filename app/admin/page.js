@@ -181,8 +181,8 @@ function VoitureForm({ initial, onSave, onCancel, uploading, onUpload }) {
       </div>
 
       <div className="flex gap-3 pt-2">
-        <button type="submit" className="btn-primary">
-          {initial ? 'Enregistrer les modifications' : 'Ajouter le véhicule'}
+        <button type="submit" disabled={uploading} className="btn-primary disabled:opacity-60 disabled:cursor-not-allowed">
+          {uploading ? 'Upload en cours...' : initial ? 'Enregistrer les modifications' : 'Ajouter le véhicule'}
         </button>
         <button type="button" onClick={onCancel} className="btn-secondary">Annuler</button>
       </div>
@@ -248,7 +248,9 @@ export default function AdminPage() {
   async function saveParametres(e) {
     e.preventDefault()
     setSavingParams(true)
-    const upserts = Object.entries(parametres).map(([cle, valeur]) => ({ cle, valeur }))
+    const upserts = Object.entries(parametres)
+      .filter(([, valeur]) => valeur !== '')
+      .map(([cle, valeur]) => ({ cle, valeur }))
     const { error } = await supabase.from('parametres').upsert(upserts, { onConflict: 'cle' })
     if (!error) showToast('Paramètres sauvegardés avec succès')
     else showToast('Erreur lors de la sauvegarde', 'err')
