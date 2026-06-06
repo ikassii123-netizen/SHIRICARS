@@ -22,6 +22,9 @@
   .badge-vendu {
     @apply bg-slate-200 text-slate-500 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide;
   }
+  .badge-reserve {
+    @apply bg-amber-100 text-amber-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide;
+  }
   .card {
     @apply bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300;
   }

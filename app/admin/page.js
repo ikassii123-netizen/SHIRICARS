@@ -10,7 +10,7 @@ function formatPrix(n) {
 }
 
 const CARBURANTS     = ['Essence', 'Diesel', 'Hybride', 'Hybride Rechargeable', 'Électrique']
-const TRANSMISSIONS  = ['Manuelle', 'Automatique']
+const TRANSMISSIONS  = ['Manuelle', 'Automatique', 'Semi-automatique']
 const VIDE = {
   marque: '', modele: '', annee: new Date().getFullYear(),
   kilometrage: 0, carburant: 'Essence', transmission: 'Manuelle',
@@ -39,7 +39,7 @@ function LoginForm({ onLogin }) {
         <div className="text-center mb-8">
           <div className="w-14 h-14 bg-red-600 rounded-2xl flex items-center justify-center font-black text-white text-xl mx-auto mb-4">SC</div>
           <h1 className="text-2xl font-black text-slate-900">Administration</h1>
-          <p className="text-slate-500 mt-1">SHIRI CARS — Espace sécurisé</p>
+          <p className="text-slate-500 mt-1">SY CAR — Espace sécurisé</p>
         </div>
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
@@ -133,6 +133,7 @@ function VoitureForm({ initial, onSave, onCancel, uploading, onUpload }) {
           <label className="block text-sm font-semibold text-slate-700 mb-1">Statut *</label>
           <select value={form.statut} onChange={e => set('statut', e.target.value)} className="input-field">
             <option value="disponible">Disponible</option>
+            <option value="reserve">Réservé</option>
             <option value="vendu">Vendu</option>
           </select>
         </div>
@@ -375,9 +376,11 @@ export default function AdminPage() {
         <aside className="w-64 bg-marine-900 text-white flex flex-col fixed left-0 top-0 h-full">
           <div className="p-6 border-b border-marine-700">
             <Link href="/" className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-red-600 rounded-xl flex items-center justify-center font-black text-sm">SC</div>
+              <div className="w-9 h-9 bg-red-600 rounded-xl flex items-center justify-center font-black text-sm">
+                {(parametres.nom_entreprise || 'SY CAR').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
+              </div>
               <div>
-                <div className="font-black text-base">SHIRI CARS</div>
+                <div className="font-black text-base">{parametres.nom_entreprise || 'SY CAR'}</div>
                 <div className="text-xs text-slate-400">Administration</div>
               </div>
             </Link>
@@ -487,8 +490,12 @@ export default function AdminPage() {
                         {v.prix_barre && <div className="text-slate-400 line-through text-sm">{formatPrix(v.prix_barre)}</div>}
                       </div>
                       <div className="flex-shrink-0">
-                        <span className={v.statut === 'disponible' ? 'badge-disponible' : 'badge-vendu'}>
-                          {v.statut === 'disponible' ? 'Disponible' : 'Vendu'}
+                        <span className={
+                          v.statut === 'disponible' ? 'badge-disponible' :
+                          v.statut === 'reserve'    ? 'badge-reserve' :
+                          'badge-vendu'
+                        }>
+                          {v.statut === 'disponible' ? 'Disponible' : v.statut === 'reserve' ? 'Réservé' : 'Vendu'}
                         </span>
                       </div>
                       <div className="flex gap-2 flex-shrink-0">

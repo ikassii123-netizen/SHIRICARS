@@ -6,11 +6,12 @@ import CarModal from './CarModal'
 const STATUT_FILTERS = [
   { key: 'all',        label: 'Tous les véhicules' },
   { key: 'disponible', label: 'Disponibles' },
+  { key: 'reserve',    label: 'Réservés' },
   { key: 'vendu',      label: 'Vendus' },
 ]
 
 const CARBURANTS    = ['Essence', 'Diesel', 'Hybride', 'Hybride Rechargeable', 'Électrique']
-const TRANSMISSIONS = ['Manuelle', 'Automatique']
+const TRANSMISSIONS = ['Manuelle', 'Automatique', 'Semi-automatique']
 
 const FILTRES_VIDES = {
   prixMin: '', prixMax: '',
@@ -72,18 +73,20 @@ export default function CatalogueClient({ voitures }) {
     return list
   }, [voitures, filtre, recherche, avances])
 
-  const nbDispo  = voitures.filter(v => v.statut === 'disponible').length
-  const nbVendus = voitures.filter(v => v.statut === 'vendu').length
+  const nbDispo    = voitures.filter(v => v.statut === 'disponible').length
+  const nbReserves = voitures.filter(v => v.statut === 'reserve').length
+  const nbVendus   = voitures.filter(v => v.statut === 'vendu').length
 
   return (
     <>
       {/* Stats */}
       <section className="bg-marine-800 text-white py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-3 gap-4 text-center">
+          <div className="grid grid-cols-4 gap-4 text-center">
             {[
-              { n: voitures.length, label: 'Véhicules au total' },
+              { n: voitures.length, label: 'Total' },
               { n: nbDispo,         label: 'Disponibles',  color: 'text-emerald-400' },
+              { n: nbReserves,      label: 'Réservés',     color: 'text-amber-400' },
               { n: nbVendus,        label: 'Vendus',       color: 'text-slate-400' },
             ].map(({ n, label, color }) => (
               <div key={label}>

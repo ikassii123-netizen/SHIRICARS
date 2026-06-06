@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS voitures (
   transmission TEXT NOT NULL DEFAULT 'Manuelle',
   prix        DECIMAL(10,2) NOT NULL,
   prix_barre  DECIMAL(10,2),             -- Prix original avant remise (nullable)
-  statut      TEXT NOT NULL DEFAULT 'disponible' CHECK (statut IN ('disponible', 'vendu')),
+  statut      TEXT NOT NULL DEFAULT 'disponible' CHECK (statut IN ('disponible', 'reserve', 'vendu')),
   description TEXT,
   photos      TEXT[] DEFAULT '{}',       -- Tableau d'URLs des photos
   date_ajout  TIMESTAMPTZ DEFAULT now()

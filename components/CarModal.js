@@ -65,7 +65,8 @@ export default function CarModal({ voiture, onClose }) {
 
   if (!voiture) return null
 
-  const vendu = voiture.statut === 'vendu'
+  const vendu   = voiture.statut === 'vendu'
+  const reserve = voiture.statut === 'reserve'
   const pct = voiture.prix_barre
     ? Math.round((1 - voiture.prix / voiture.prix_barre) * 100)
     : null
@@ -124,8 +125,12 @@ export default function CarModal({ voiture, onClose }) {
 
                 {/* Badge statut */}
                 <div className="absolute top-3 left-3 z-10">
-                  <span className={vendu ? 'badge-vendu' : 'badge-disponible'}>
-                    {vendu ? 'Vendu' : 'Disponible'}
+                  <span className={
+                    vendu   ? 'badge-vendu' :
+                    reserve ? 'badge-reserve' :
+                    'badge-disponible'
+                  }>
+                    {vendu ? 'Vendu' : reserve ? 'Réservé' : 'Disponible'}
                   </span>
                 </div>
 
@@ -260,9 +265,11 @@ export default function CarModal({ voiture, onClose }) {
               <a
                 href="#contact"
                 onClick={onClose}
-                className="btn-primary w-full text-center block"
+                className={`w-full text-center block ${reserve ? 'btn-secondary border-amber-500 text-amber-700 hover:bg-amber-50' : 'btn-primary'}`}
               >
-                Je suis intéressé — Nous contacter
+                {reserve
+                  ? "Ce véhicule est réservé — Me mettre sur liste d'attente"
+                  : "Je suis intéressé — Nous contacter"}
               </a>
             )}
           </div>

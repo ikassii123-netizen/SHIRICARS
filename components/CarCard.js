@@ -28,7 +28,9 @@ export default function CarCard({ voiture, onClick }) {
   const [photoIdx, setPhotoIdx] = useState(0)
   const photos = voiture.photos?.length ? voiture.photos : [PLACEHOLDER]
   const pct = remise(voiture.prix_barre, voiture.prix)
-  const vendu = voiture.statut === 'vendu'
+  const vendu   = voiture.statut === 'vendu'
+  const reserve = voiture.statut === 'reserve'
+  const indispo = vendu || reserve
 
   const prev = (e) => {
     e.stopPropagation()
@@ -41,7 +43,7 @@ export default function CarCard({ voiture, onClick }) {
 
   return (
     <article
-      className={`card cursor-pointer group ${vendu ? 'opacity-75' : ''}`}
+      className={`card cursor-pointer group ${indispo ? 'opacity-80' : ''}`}
       onClick={() => onClick(voiture)}
     >
       {/* Image */}
@@ -49,20 +51,35 @@ export default function CarCard({ voiture, onClick }) {
         <img
           src={photos[photoIdx]}
           alt={`${voiture.marque} ${voiture.modele}`}
-          className="w-full h-full object-cover transition-opacity duration-200"
+          className={`w-full h-full object-cover transition-opacity duration-200 ${indispo ? 'brightness-75' : ''}`}
           loading="lazy"
           onError={e => { e.target.src = PLACEHOLDER }}
         />
 
+        {/* Overlay diagonal VENDU / RÉSERVÉ */}
+        {indispo && (
+          <div className="absolute inset-0 flex items-center justify-center z-20 overflow-hidden">
+            <div className={`w-[140%] py-2.5 text-center font-black text-white text-base tracking-widest shadow-2xl transform rotate-[-28deg] ${
+              vendu ? 'bg-red-600/90' : 'bg-amber-500/90'
+            }`}>
+              {vendu ? 'VENDU' : 'RÉSERVÉ'}
+            </div>
+          </div>
+        )}
+
         {/* Status badge */}
         <div className="absolute top-3 left-3 z-10">
-          <span className={vendu ? 'badge-vendu' : 'badge-disponible'}>
-            {vendu ? 'Vendu' : 'Disponible'}
+          <span className={
+            vendu   ? 'badge-vendu' :
+            reserve ? 'badge-reserve' :
+            'badge-disponible'
+          }>
+            {vendu ? 'Vendu' : reserve ? 'Réservé' : 'Disponible'}
           </span>
         </div>
 
         {/* Remise badge */}
-        {pct && !vendu && (
+        {pct && !indispo && (
           <div className="absolute top-3 right-3 z-10 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-lg">
             -{pct}%
           </div>
