@@ -9,27 +9,27 @@ export default function Header({ nomEntreprise = 'SY CAR', slogan = 'La confianc
   return (
     <header className="bg-marine-900 text-white sticky top-0 z-50 shadow-xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center font-black text-white text-sm group-hover:bg-red-500 transition-colors">
+            <div className="w-12 h-12 bg-red-600 rounded-xl flex items-center justify-center font-black text-white text-base group-hover:bg-red-500 transition-colors">
               {initiales}
             </div>
             <div className="leading-tight">
-              <div className="font-black text-lg tracking-wide">{nomEntreprise}</div>
-              <div className="text-xs text-slate-400 font-medium">{slogan}</div>
+              <div className="font-black text-xl tracking-wide">{nomEntreprise}</div>
+              <div className="text-sm text-slate-400 font-medium">{slogan}</div>
             </div>
           </Link>
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-8">
-            <a href="#catalogue" className="text-slate-300 hover:text-white font-medium transition-colors text-sm">
+            <a href="#catalogue" className="text-slate-300 hover:text-white font-medium transition-colors">
               Catalogue
             </a>
-            <Link href="/a-propos" className="text-slate-300 hover:text-white font-medium transition-colors text-sm">
+            <Link href="/a-propos" className="text-slate-300 hover:text-white font-medium transition-colors">
               Qui sommes-nous
             </Link>
-            <a href="#contact" className="text-slate-300 hover:text-white font-medium transition-colors text-sm">
+            <a href="#contact" className="text-slate-300 hover:text-white font-medium transition-colors">
               Contact
             </a>
           </nav>
