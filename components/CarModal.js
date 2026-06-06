@@ -42,8 +42,8 @@ export default function CarModal({ voiture, onClose }) {
 
   const clampPan = (px, py, scale) => {
     if (!baseDisplaySize) return { px, py }
-    const maxX = (baseDisplaySize.w * (scale - 1)) / 2
-    const maxY = (baseDisplaySize.h * (scale - 1)) / 2
+    const maxX = Math.max(0, (baseDisplaySize.w * scale - window.innerWidth)  / 2)
+    const maxY = Math.max(0, (baseDisplaySize.h * scale - window.innerHeight) / 2)
     return {
       px: Math.max(-maxX, Math.min(maxX, px)),
       py: Math.max(-maxY, Math.min(maxY, py)),
@@ -442,7 +442,6 @@ export default function CarModal({ voiture, onClose }) {
                 height: baseDisplaySize.h * zoomScale,
                 transform: `translate(${panX}px, ${panY}px)`,
                 cursor: isDragging ? 'grabbing' : 'grab',
-                transition: isDragging ? 'none' : 'width 0.2s ease, height 0.2s ease',
                 flexShrink: 0,
               } : {
                 maxWidth: '90vw',
