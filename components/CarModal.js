@@ -27,26 +27,23 @@ export default function CarModal({ voiture, onClose, whatsapp = '', onFilterDisp
   const dragStartRef = useRef({ x: 0, y: 0 })
   const pinchStartRef = useRef(null)
   const imgRef = useRef(null)
-  const [baseDisplaySize, setBaseDisplaySize] = useState(null)
-  // Refs para evitar closures obsoletas en los handlers del useEffect
   const zoomScaleRef = useRef(1)
   const panXRef = useRef(0)
   const panYRef = useRef(0)
-  const baseDisplaySizeRef = useRef(null)
   const swipeLightboxStartRef = useRef(null)
   zoomScaleRef.current = zoomScale
   panXRef.current = panX
   panYRef.current = panY
-  baseDisplaySizeRef.current = baseDisplaySize
   photoIdxRef.current = photoIdx
   lightboxRef.current = lightboxOpen
 
   const photos = voiture?.photos?.length ? voiture.photos : [PLACEHOLDER]
 
   const clampPan = (px, py, scale) => {
-    if (!baseDisplaySize) return { px, py }
-    const maxX = Math.max(0, (baseDisplaySize.w * scale - window.innerWidth)  / 2)
-    const maxY = Math.max(0, (baseDisplaySize.h * scale - window.innerHeight) / 2)
+    const el = imgRef.current
+    if (!el) return { px, py }
+    const maxX = Math.max(0, (el.offsetWidth * scale - window.innerWidth) / 2)
+    const maxY = Math.max(0, (el.offsetHeight * scale - window.innerHeight) / 2)
     return {
       px: Math.max(-maxX, Math.min(maxX, px)),
       py: Math.max(-maxY, Math.min(maxY, py)),
@@ -58,12 +55,11 @@ export default function CarModal({ voiture, onClose, whatsapp = '', onFilterDisp
   const goTo = (idx) => {
     if (!fade) return
     resetZoom()
-    setBaseDisplaySize(null)
     setFade(false)
     setTimeout(() => { setPhotoIdx(idx); setFade(true) }, 150)
   }
 
-  const openLightbox = () => { setLightboxOpen(true); resetZoom() }
+  const openLightbox = () => { resetZoom(); setLightboxOpen(true) }
   const closeLightbox = () => { setLightboxOpen(false); resetZoom() }
 
   const handleLightboxMouseDown = (e) => {
@@ -89,11 +85,13 @@ export default function CarModal({ voiture, onClose, whatsapp = '', onFilterDisp
     e.stopPropagation()
     if (hasDraggedRef.current) return
     if (zoomScale > 1) { resetZoom(); return }
-    const rect = e.currentTarget.closest('.lightbox-area').getBoundingClientRect()
-    const cx = rect.left + rect.width / 2
-    const cy = rect.top + rect.height / 2
+    const el = imgRef.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
     const newScale = 2.5
-    const raw = { px: (e.clientX - cx) * (1 - newScale), py: (e.clientY - cy) * (1 - newScale) }
+    const dx = e.clientX - (rect.left + rect.width / 2)
+    const dy = e.clientY - (rect.top + rect.height / 2)
+    const raw = { px: -dx * (newScale - 1), py: -dy * (newScale - 1) }
     const clamped = clampPan(raw.px, raw.py, newScale)
     setPanX(clamped.px)
     setPanY(clamped.py)
@@ -110,10 +108,10 @@ export default function CarModal({ voiture, onClose, whatsapp = '', onFilterDisp
     }
 
     const clampRef = (px, py, scale) => {
-      const bds = baseDisplaySizeRef.current
-      if (!bds) return { px, py }
-      const maxX = Math.max(0, (bds.w * scale - window.innerWidth) / 2)
-      const maxY = Math.max(0, (bds.h * scale - window.innerHeight) / 2)
+      const el = imgRef.current
+      if (!el) return { px, py }
+      const maxX = Math.max(0, (el.offsetWidth * scale - window.innerWidth) / 2)
+      const maxY = Math.max(0, (el.offsetHeight * scale - window.innerHeight) / 2)
       return {
         px: Math.max(-maxX, Math.min(maxX, px)),
         py: Math.max(-maxY, Math.min(maxY, py)),
@@ -121,6 +119,7 @@ export default function CarModal({ voiture, onClose, whatsapp = '', onFilterDisp
     }
 
     const onTouchStart = (e) => {
+      if (e.target.closest('button')) return  // laisser les boutons fléches fonctionner
       if (e.touches.length === 2) {
         e.preventDefault()
         pinchStartRef.current = { distance: getPinchDist(e.touches), scale: zoomScaleRef.current }
@@ -503,18 +502,13 @@ export default function CarModal({ voiture, onClose, whatsapp = '', onFilterDisp
               alt={`${voiture.marque} ${voiture.modele}`}
               ref={imgRef}
               className="object-contain select-none"
-              style={zoomScale > 1 && baseDisplaySize ? {
-                width:  baseDisplaySize.w * zoomScale,
-                height: baseDisplaySize.h * zoomScale,
-                transform: `translate(${panX}px, ${panY}px)`,
-                cursor: isDragging ? 'grabbing' : 'grab',
-                flexShrink: 0,
-              } : {
+              style={{
                 maxWidth: '90vw',
                 maxHeight: '90vh',
-                cursor: 'zoom-in',
+                transform: `translate(${panX}px, ${panY}px) scale(${zoomScale})`,
+                transformOrigin: 'center center',
+                cursor: zoomScale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'zoom-in',
               }}
-              onLoad={e => setBaseDisplaySize({ w: e.target.offsetWidth, h: e.target.offsetHeight })}
               onMouseDown={handleLightboxMouseDown}
               onClick={handleImageClick}
               onError={e => { e.target.src = PLACEHOLDER }}
