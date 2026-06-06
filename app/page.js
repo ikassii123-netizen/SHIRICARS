@@ -56,7 +56,7 @@ export default async function HomePage() {
         </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative text-center">
           <div className="inline-flex items-center gap-2 bg-marine-700 text-slate-300 text-sm font-medium px-4 py-2 rounded-full mb-6">
-            🚗 Votre spécialiste de la vente automobile
+            Votre spécialiste de la vente automobile
           </div>
           <h1 className="text-5xl sm:text-6xl font-black leading-tight mb-6">
             Trouvez Votre<br />
