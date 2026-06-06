@@ -27,6 +27,7 @@ export default function CarModal({ voiture, onClose }) {
   const dragStartRef = useRef({ x: 0, y: 0 })
   const pinchStartRef = useRef(null)
   const imgRef = useRef(null)
+  const [baseDisplaySize, setBaseDisplaySize] = useState(null)
   // Refs para evitar closures obsoletas en los handlers del useEffect
   const zoomScaleRef = useRef(1)
   const panXRef = useRef(0)
@@ -40,9 +41,9 @@ export default function CarModal({ voiture, onClose }) {
   const photos = voiture?.photos?.length ? voiture.photos : [PLACEHOLDER]
 
   const clampPan = (px, py, scale) => {
-    if (!imgRef.current) return { px, py }
-    const maxX = (imgRef.current.offsetWidth  * (scale - 1)) / 2
-    const maxY = (imgRef.current.offsetHeight * (scale - 1)) / 2
+    if (!baseDisplaySize) return { px, py }
+    const maxX = (baseDisplaySize.w * (scale - 1)) / 2
+    const maxY = (baseDisplaySize.h * (scale - 1)) / 2
     return {
       px: Math.max(-maxX, Math.min(maxX, px)),
       py: Math.max(-maxY, Math.min(maxY, py)),
@@ -54,6 +55,7 @@ export default function CarModal({ voiture, onClose }) {
   const goTo = (idx) => {
     if (!fade) return
     resetZoom()
+    setBaseDisplaySize(null)
     setFade(false)
     setTimeout(() => { setPhotoIdx(idx); setFade(true) }, 150)
   }
@@ -434,13 +436,20 @@ export default function CarModal({ voiture, onClose }) {
               src={photos[photoIdx]}
               alt={`${voiture.marque} ${voiture.modele}`}
               ref={imgRef}
-              className="max-w-[90vw] max-h-[90vh] object-contain select-none"
-              style={{
-                transform: `translate(${panX}px, ${panY}px) scale(${zoomScale})`,
-                transformOrigin: 'center center',
-                cursor: zoomScale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'zoom-in',
-                transition: isDragging ? 'none' : 'transform 0.2s ease',
+              className="object-contain select-none"
+              style={zoomScale > 1 && baseDisplaySize ? {
+                width:  baseDisplaySize.w * zoomScale,
+                height: baseDisplaySize.h * zoomScale,
+                transform: `translate(${panX}px, ${panY}px)`,
+                cursor: isDragging ? 'grabbing' : 'grab',
+                transition: isDragging ? 'none' : 'width 0.2s ease, height 0.2s ease',
+                flexShrink: 0,
+              } : {
+                maxWidth: '90vw',
+                maxHeight: '90vh',
+                cursor: 'zoom-in',
               }}
+              onLoad={e => setBaseDisplaySize({ w: e.target.offsetWidth, h: e.target.offsetHeight })}
               onMouseDown={handleLightboxMouseDown}
               onClick={handleImageClick}
               onError={e => { e.target.src = PLACEHOLDER }}
