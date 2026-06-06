@@ -1,6 +1,18 @@
 'use client'
 import { useState } from 'react'
-import { Fuel, Settings2, Gauge, Zap, Palette } from 'lucide-react'
+import { Fuel, Settings2, Gauge, Palette, Zap } from 'lucide-react'
+
+const PistonIcon = ({ size = 12 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="5" y1="3" x2="5" y2="6" />
+    <line x1="19" y1="3" x2="19" y2="6" />
+    <rect x="4" y="6" width="16" height="8" rx="1" />
+    <line x1="4" y1="10" x2="20" y2="10" />
+    <line x1="4" y1="12" x2="20" y2="12" />
+    <line x1="12" y1="14" x2="12" y2="20" />
+    <circle cx="12" cy="21" r="1.5" fill="currentColor" stroke="none" />
+  </svg>
+)
 
 const PLACEHOLDER = 'https://images.unsplash.com/photo-1583267746897-2cf415887172?w=600&q=80'
 
@@ -138,7 +150,7 @@ export default function CarCard({ voiture, onClick }) {
             { icon: <Gauge size={12} />, label: formatKm(voiture.kilometrage) },
             { icon: <Fuel size={12} />, label: voiture.carburant },
             { icon: <Settings2 size={12} />, label: voiture.transmission },
-            voiture.puissance_cv ? { icon: <Zap size={12} />, label: `${voiture.puissance_cv} CV` } : null,
+            voiture.puissance_cv ? { icon: voiture.carburant === 'Électrique' ? <Zap size={12} /> : <PistonIcon size={12} />, label: `${voiture.puissance_cv} CV` } : null,
             voiture.couleur ? { icon: <Palette size={12} />, label: voiture.couleur, dot: COULEUR_DOT[voiture.couleur] } : null,
           ].filter(Boolean).map(({ icon, label, dot }) => (
             <span key={label} className={`text-xs bg-slate-100 px-2 py-1 rounded-lg font-medium flex items-center gap-1.5 ${vendu ? 'text-slate-400' : 'text-slate-500'}`}>

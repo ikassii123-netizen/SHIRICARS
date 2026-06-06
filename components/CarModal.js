@@ -1,6 +1,27 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import { Fuel, Settings2, Gauge, Calendar, Palette, Zap, DoorOpen, User, Cog, FileText, ShieldCheck } from 'lucide-react'
+import { Fuel, Settings2, Gauge, Calendar, Palette, User, Cog, FileText, ShieldCheck, Zap } from 'lucide-react'
+
+const PistonIcon = ({ size = 15 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="5" y1="3" x2="5" y2="6" />
+    <line x1="19" y1="3" x2="19" y2="6" />
+    <rect x="4" y="6" width="16" height="8" rx="1" />
+    <line x1="4" y1="10" x2="20" y2="10" />
+    <line x1="4" y1="12" x2="20" y2="12" />
+    <line x1="12" y1="14" x2="12" y2="20" />
+    <circle cx="12" cy="21" r="1.5" fill="currentColor" stroke="none" />
+  </svg>
+)
+
+const CarDoorIcon = ({ size = 15 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="2" width="17" height="20" rx="2" />
+    <rect x="4" y="4" width="13" height="8" rx="1" />
+    <path d="M19 14h2a1 1 0 010 2h-2" />
+    <line x1="19" y1="15" x2="21" y2="15" />
+  </svg>
+)
 
 const PLACEHOLDER = 'https://images.unsplash.com/photo-1583267746897-2cf415887172?w=800&q=80'
 
@@ -411,8 +432,8 @@ export default function CarModal({ voiture, onClose, whatsapp = '', onFilterDisp
                   { icon: <Gauge size={15} />,        label: 'Kilométrage',         value: formatKm(voiture.kilometrage) },
                   { icon: <Calendar size={15} />,     label: 'Année',               value: voiture.annee },
                   voiture.couleur           ? { icon: <Palette size={15} />,     label: 'Couleur',             value: voiture.couleur } : null,
-                  voiture.puissance_cv      ? { icon: <Zap size={15} />,         label: 'Puissance',           value: `${voiture.puissance_cv} CV` } : null,
-                  voiture.nb_portes         ? { icon: <DoorOpen size={15} />,    label: 'Portes',              value: `${voiture.nb_portes} portes` } : null,
+                  voiture.puissance_cv      ? { icon: voiture.carburant === 'Électrique' ? <Zap size={15} /> : <PistonIcon size={15} />, label: 'Puissance', value: `${voiture.puissance_cv} CV` } : null,
+                  voiture.nb_portes         ? { icon: <CarDoorIcon size={15} />, label: 'Portes',              value: `${voiture.nb_portes} portes` } : null,
                   voiture.nb_proprietaires  ? { icon: <User size={15} />,        label: 'Propriétaires',       value: voiture.nb_proprietaires === 1 ? '1ère main' : `${voiture.nb_proprietaires} propriétaires` } : null,
                   voiture.cylindree         ? { icon: <Cog size={15} />,         label: 'Cylindrée',           value: `${voiture.cylindree} cm³` } : null,
                   voiture.puissance_fiscale ? { icon: <FileText size={15} />,    label: 'Puiss. fiscale',      value: `${voiture.puissance_fiscale} CV fiscaux` } : null,
