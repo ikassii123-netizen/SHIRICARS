@@ -22,6 +22,7 @@ export default function CarModal({ voiture, onClose }) {
   const photoIdxRef = useRef(0)
   const lightboxRef = useRef(false)
   const isDraggingRef = useRef(false)
+  const hasDraggedRef = useRef(false)
   const dragStartRef = useRef({ x: 0, y: 0 })
   const pinchStartRef = useRef(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -43,6 +44,7 @@ export default function CarModal({ voiture, onClose }) {
   const closeLightbox = () => { setLightboxOpen(false); resetZoom() }
 
   const handleLightboxMouseDown = (e) => {
+    hasDraggedRef.current = false
     if (zoomScale <= 1) return
     e.preventDefault()
     e.stopPropagation()
@@ -52,10 +54,24 @@ export default function CarModal({ voiture, onClose }) {
   }
   const handleLightboxMouseMove = (e) => {
     if (!isDraggingRef.current) return
+    hasDraggedRef.current = true
     setPanX(e.clientX - dragStartRef.current.x)
     setPanY(e.clientY - dragStartRef.current.y)
   }
   const handleLightboxMouseUp = () => { isDraggingRef.current = false; setIsDragging(false) }
+
+  const handleImageClick = (e) => {
+    e.stopPropagation()
+    if (hasDraggedRef.current) return
+    if (zoomScale > 1) { resetZoom(); return }
+    const rect = e.currentTarget.closest('.lightbox-area').getBoundingClientRect()
+    const cx = rect.left + rect.width / 2
+    const cy = rect.top + rect.height / 2
+    const newScale = 2.5
+    setPanX((e.clientX - cx) * (1 - newScale))
+    setPanY((e.clientY - cy) * (1 - newScale))
+    setZoomScale(newScale)
+  }
 
   useEffect(() => {
     if (!lightboxOpen) return
@@ -64,16 +80,6 @@ export default function CarModal({ voiture, onClose }) {
       const dx = touches[0].clientX - touches[1].clientX
       const dy = touches[0].clientY - touches[1].clientY
       return Math.sqrt(dx * dx + dy * dy)
-    }
-
-    const onWheel = (e) => {
-      e.preventDefault()
-      const factor = e.deltaY < 0 ? 1.15 : 0.87
-      setZoomScale(prev => {
-        const next = Math.min(4, Math.max(1, prev * factor))
-        if (next <= 1.05) { setPanX(0); setPanY(0); return 1 }
-        return next
-      })
     }
 
     const onTouchStart = (e) => {
@@ -106,12 +112,10 @@ export default function CarModal({ voiture, onClose }) {
       if (e.touches.length === 0) { isDraggingRef.current = false; setIsDragging(false) }
     }
 
-    document.addEventListener('wheel', onWheel, { passive: false })
     document.addEventListener('touchstart', onTouchStart, { passive: false })
     document.addEventListener('touchmove', onTouchMove, { passive: false })
     document.addEventListener('touchend', onTouchEnd)
     return () => {
-      document.removeEventListener('wheel', onWheel)
       document.removeEventListener('touchstart', onTouchStart)
       document.removeEventListener('touchmove', onTouchMove)
       document.removeEventListener('touchend', onTouchEnd)
@@ -395,7 +399,7 @@ export default function CarModal({ voiture, onClose }) {
           </div>
 
           {/* Imagen con zoom y pan */}
-          <div className="w-full h-full flex items-center justify-center" onClick={e => e.stopPropagation()}>
+          <div className="lightbox-area w-full h-full flex items-center justify-center" onClick={e => e.stopPropagation()}>
             <img
               src={photos[photoIdx]}
               alt={`${voiture.marque} ${voiture.modele}`}
@@ -404,10 +408,10 @@ export default function CarModal({ voiture, onClose }) {
                 transform: `translate(${panX}px, ${panY}px) scale(${zoomScale})`,
                 transformOrigin: 'center center',
                 cursor: zoomScale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'zoom-in',
-                transition: isDragging ? 'none' : 'transform 0.15s ease',
+                transition: isDragging ? 'none' : 'transform 0.2s ease',
               }}
               onMouseDown={handleLightboxMouseDown}
-              onDoubleClick={resetZoom}
+              onClick={handleImageClick}
               onError={e => { e.target.src = PLACEHOLDER }}
               draggable={false}
             />
@@ -415,7 +419,7 @@ export default function CarModal({ voiture, onClose }) {
 
           {/* Hint */}
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/40 text-xs text-center pointer-events-none">
-            {zoomScale > 1 ? 'Glissez pour explorer · Double-clic pour réinitialiser' : 'Molette ou pince (2 doigts) pour zoomer'}
+            {zoomScale > 1 ? 'Glissez pour explorer · Cliquez pour réinitialiser' : 'Cliquez sur la photo pour zoomer'}
           </div>
 
           {/* Flechas */}
