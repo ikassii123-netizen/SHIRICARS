@@ -203,7 +203,7 @@ export default function AdminPage() {
   const [onglet, setOnglet]         = useState('voitures') // voitures | messages | parametres
   const [toast, setToast]           = useState(null)
   const [parametres, setParametres] = useState({
-    titre_site: '', description_site: '', nom_entreprise: '', slogan: '', adresse: '', telephone: '', email: '', horaires: '', resend_api_key: '', whatsapp: '', whatsapp_message: '', siret: '', tva: '', directeur_publication: ''
+    titre_site: '', description_site: '', nom_entreprise: '', slogan: '', adresse: '', telephone: '', email: '', horaires: '', resend_api_key: '', whatsapp: '', whatsapp_message: '', siret: '', tva: '', directeur_publication: '', maps_lien: '', maps_embed: ''
   })
   const [showResendKey, setShowResendKey] = useState(false)
   const [savingParams, setSavingParams] = useState(false)
@@ -601,6 +601,20 @@ export default function AdminPage() {
                       <input value={parametres.adresse}
                         onChange={e => setParametres(p => ({ ...p, adresse: e.target.value }))}
                         className="input-field" placeholder="12 Rue de la Paix, 75001 Paris" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-1">🗺️ Lien Google Maps <span className="text-slate-400 font-normal">(bouton itinéraire)</span></label>
+                      <input value={parametres.maps_lien}
+                        onChange={e => setParametres(p => ({ ...p, maps_lien: e.target.value }))}
+                        className="input-field" placeholder="https://maps.app.goo.gl/..." />
+                      <p className="text-xs text-slate-400 mt-1">Google Maps → votre adresse → <strong>Partager</strong> → copier le lien</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-1">🗺️ URL d'intégration Maps <span className="text-slate-400 font-normal">(carte sur le site)</span></label>
+                      <input value={parametres.maps_embed}
+                        onChange={e => setParametres(p => ({ ...p, maps_embed: e.target.value }))}
+                        className="input-field" placeholder="https://www.google.com/maps/embed?pb=..." />
+                      <p className="text-xs text-slate-400 mt-1">Google Maps → votre adresse → <strong>Partager → Intégrer une carte</strong> → copier uniquement l'URL dans src="..."</p>
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-slate-700 mb-1">📞 Téléphone</label>

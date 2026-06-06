@@ -7,6 +7,8 @@ const DEFAULTS = {
   telephone: '+33 1 23 45 67 89',
   email:     'contact@shiricars.fr',
   horaires:  'Lundi – Samedi : 9h00 – 19h00',
+  maps_lien:  '',
+  maps_embed: '',
 }
 
 export default function ContactForm() {
@@ -56,7 +58,9 @@ export default function ContactForm() {
     { icon: '🕐', title: 'Horaires',  value: infos.horaires },
   ]
 
-  const adresseEncode = encodeURIComponent(infos.adresse || 'Arras, France')
+  const adresseEncode = encodeURIComponent(infos.adresse || 'Paris, France')
+  const iframeSrc = infos.maps_embed || `https://maps.google.com/maps?q=${adresseEncode}&output=embed&z=15`
+  const mapsLien  = infos.maps_lien  || `https://maps.google.com/maps?q=${adresseEncode}`
 
   return (
     <section id="contact" className="bg-marine-900 text-white py-20">
@@ -84,17 +88,39 @@ export default function ContactForm() {
               ))}
             </div>
 
-            {/* Google Maps */}
-            <div className="mt-8 rounded-2xl overflow-hidden border border-marine-700">
+            {/* Bouton itinéraire */}
+            <a
+              href={mapsLien}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-8 flex items-center gap-3 w-full bg-marine-700 hover:bg-marine-600 transition-colors rounded-2xl px-5 py-4"
+            >
+              <div className="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <div className="font-bold text-white text-sm">Voir l'itinéraire</div>
+                <div className="text-slate-400 text-xs">{infos.adresse}</div>
+              </div>
+              <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </a>
+
+            {/* Carte intégrée */}
+            <div className="mt-4 rounded-2xl overflow-hidden border border-marine-700">
               <iframe
-                title="Localisation SHIRI CARS"
+                title="Localisation"
                 width="100%"
                 height="220"
                 style={{ border: 0 }}
                 loading="lazy"
                 allowFullScreen
                 referrerPolicy="no-referrer-when-downgrade"
-                src={`https://maps.google.com/maps?q=${adresseEncode}&output=embed&z=14`}
+                src={iframeSrc}
               />
             </div>
           </div>
