@@ -85,7 +85,7 @@ export default async function HomePage() {
       {/* Footer */}
       <footer className="bg-marine-900 border-t border-marine-700 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-400 text-sm">
-          <div className="font-semibold text-white">{nomEntreprise}</div>
+          <Link href="/admin" className="font-semibold text-white hover:text-slate-300 transition-colors">{nomEntreprise}</Link>
           <p>© {new Date().getFullYear()} {nomEntreprise} — Tous droits réservés</p>
           <div className="flex gap-4">
             <Link href="/a-propos" className="hover:text-white transition-colors">Qui sommes-nous</Link>
