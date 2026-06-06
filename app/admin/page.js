@@ -213,6 +213,8 @@ export default function AdminPage() {
     setTimeout(() => setToast(null), 3500)
   }
 
+  const revalidate = () => fetch('/api/revalidate', { method: 'POST' })
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
@@ -253,7 +255,7 @@ export default function AdminPage() {
       .filter(([, valeur]) => valeur !== '')
       .map(([cle, valeur]) => ({ cle, valeur }))
     const { error } = await supabase.from('parametres').upsert(upserts, { onConflict: 'cle' })
-    if (!error) showToast('Paramètres sauvegardés avec succès')
+    if (!error) { revalidate(); showToast('Paramètres sauvegardés avec succès') }
     else showToast('Erreur lors de la sauvegarde', 'err')
     setSavingParams(false)
   }
@@ -294,11 +296,11 @@ export default function AdminPage() {
   async function handleSave(data) {
     if (mode === 'modifier' && current) {
       const { error } = await supabase.from('voitures').update(data).eq('id', current.id)
-      if (!error) { showToast('Véhicule modifié avec succès'); await loadVoitures(); setMode('liste') }
+      if (!error) { revalidate(); showToast('Véhicule modifié avec succès'); await loadVoitures(); setMode('liste') }
       else showToast('Erreur lors de la modification', 'err')
     } else {
       const { error } = await supabase.from('voitures').insert([data])
-      if (!error) { showToast('Véhicule ajouté avec succès'); await loadVoitures(); setMode('liste') }
+      if (!error) { revalidate(); showToast('Véhicule ajouté avec succès'); await loadVoitures(); setMode('liste') }
       else showToast('Erreur lors de l\'ajout', 'err')
     }
   }
@@ -306,6 +308,7 @@ export default function AdminPage() {
   async function handleDelete(id) {
     if (!confirm('Supprimer ce véhicule définitivement ?')) return
     await supabase.from('voitures').delete().eq('id', id)
+    revalidate()
     showToast('Véhicule supprimé')
     loadVoitures()
   }
