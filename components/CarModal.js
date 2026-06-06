@@ -23,6 +23,7 @@ export default function CarModal({ voiture, onClose }) {
   const lightboxRef = useRef(false)
   const isDraggingRef = useRef(false)
   const dragStartRef = useRef({ x: 0, y: 0 })
+  const pinchStartRef = useRef(null)
   const [isDragging, setIsDragging] = useState(false)
   photoIdxRef.current = photoIdx
   lightboxRef.current = lightboxOpen
@@ -58,6 +59,13 @@ export default function CarModal({ voiture, onClose }) {
 
   useEffect(() => {
     if (!lightboxOpen) return
+
+    const getPinchDist = (touches) => {
+      const dx = touches[0].clientX - touches[1].clientX
+      const dy = touches[0].clientY - touches[1].clientY
+      return Math.sqrt(dx * dx + dy * dy)
+    }
+
     const onWheel = (e) => {
       e.preventDefault()
       const factor = e.deltaY < 0 ? 1.15 : 0.87
@@ -67,9 +75,48 @@ export default function CarModal({ voiture, onClose }) {
         return next
       })
     }
+
+    const onTouchStart = (e) => {
+      if (e.touches.length === 2) {
+        e.preventDefault()
+        pinchStartRef.current = { distance: getPinchDist(e.touches), scale: zoomScale }
+      } else if (e.touches.length === 1) {
+        const t = e.touches[0]
+        isDraggingRef.current = true
+        dragStartRef.current = { x: t.clientX - panX, y: t.clientY - panY }
+      }
+    }
+
+    const onTouchMove = (e) => {
+      if (e.touches.length === 2 && pinchStartRef.current) {
+        e.preventDefault()
+        const newDist = getPinchDist(e.touches)
+        const newScale = Math.min(4, Math.max(1, pinchStartRef.current.scale * (newDist / pinchStartRef.current.distance)))
+        setZoomScale(newScale)
+        if (newScale <= 1) { setPanX(0); setPanY(0) }
+      } else if (e.touches.length === 1 && isDraggingRef.current) {
+        e.preventDefault()
+        setPanX(e.touches[0].clientX - dragStartRef.current.x)
+        setPanY(e.touches[0].clientY - dragStartRef.current.y)
+      }
+    }
+
+    const onTouchEnd = (e) => {
+      if (e.touches.length < 2) pinchStartRef.current = null
+      if (e.touches.length === 0) { isDraggingRef.current = false; setIsDragging(false) }
+    }
+
     document.addEventListener('wheel', onWheel, { passive: false })
-    return () => document.removeEventListener('wheel', onWheel)
-  }, [lightboxOpen])
+    document.addEventListener('touchstart', onTouchStart, { passive: false })
+    document.addEventListener('touchmove', onTouchMove, { passive: false })
+    document.addEventListener('touchend', onTouchEnd)
+    return () => {
+      document.removeEventListener('wheel', onWheel)
+      document.removeEventListener('touchstart', onTouchStart)
+      document.removeEventListener('touchmove', onTouchMove)
+      document.removeEventListener('touchend', onTouchEnd)
+    }
+  }, [lightboxOpen, zoomScale, panX, panY])
 
   const handleTouchStart = (e) => { touchStartX.current = e.touches[0].clientX }
   const handleTouchEnd = (e) => {
@@ -368,7 +415,7 @@ export default function CarModal({ voiture, onClose }) {
 
           {/* Hint */}
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/40 text-xs text-center pointer-events-none">
-            {zoomScale > 1 ? 'Glissez pour explorer · Double-clic pour réinitialiser' : 'Molette pour zoomer · Clic pour fermer'}
+            {zoomScale > 1 ? 'Glissez pour explorer · Double-clic pour réinitialiser' : 'Molette ou pince (2 doigts) pour zoomer'}
           </div>
 
           {/* Flechas */}
