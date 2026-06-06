@@ -32,12 +32,6 @@ export default function Header({ nomEntreprise = 'SY CAR', slogan = 'La confianc
             <a href="#contact" className="text-slate-300 hover:text-white font-medium transition-colors text-sm">
               Contact
             </a>
-            <Link
-              href="/admin"
-              className="bg-red-600 hover:bg-red-500 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
-            >
-              Administration
-            </Link>
           </nav>
 
           {/* Mobile burger */}
@@ -60,7 +54,6 @@ export default function Header({ nomEntreprise = 'SY CAR', slogan = 'La confianc
             <a href="#catalogue" onClick={() => setMenuOpen(false)} className="block text-slate-300 hover:text-white font-medium">Catalogue</a>
             <Link href="/a-propos" onClick={() => setMenuOpen(false)} className="block text-slate-300 hover:text-white font-medium">Qui sommes-nous</Link>
             <a href="#contact" onClick={() => setMenuOpen(false)} className="block text-slate-300 hover:text-white font-medium">Contact</a>
-            <Link href="/admin" className="block bg-red-600 text-white font-semibold px-4 py-2 rounded-lg text-center">Administration</Link>
           </div>
         )}
       </div>
