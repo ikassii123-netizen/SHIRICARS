@@ -232,6 +232,7 @@ export default function AdminPage() {
   })
   const [showResendKey, setShowResendKey] = useState(false)
   const [savingParams, setSavingParams] = useState(false)
+  const [confirmModal, setConfirmModal] = useState(null)
 
   const showToast = (msg, type = 'ok') => {
     setToast({ msg, type })
@@ -324,16 +325,36 @@ export default function AdminPage() {
     else if (erreurs === 0 && aUploader.length > 0) showToast('Photos envoyées avec succès')
   }
 
-  async function handleSave(data) {
+  async function doSave(data, cleanPhotos) {
+    setConfirmModal(null)
+    let savedData = data
+    if (cleanPhotos && data.photos?.length > 1) {
+      const paths = data.photos.slice(1).map(url => url.split('/voitures/')[1]).filter(Boolean)
+      if (paths.length) await supabase.storage.from('voitures').remove(paths)
+      savedData = { ...data, photos: [data.photos[0]] }
+    }
     if (mode === 'modifier' && current) {
-      const { error } = await supabase.from('voitures').update(data).eq('id', current.id)
+      const { error } = await supabase.from('voitures').update(savedData).eq('id', current.id)
       if (!error) { revalidate(); showToast('Véhicule modifié avec succès'); await loadVoitures(); setMode('liste') }
       else showToast('Erreur lors de la modification', 'err')
     } else {
-      const { error } = await supabase.from('voitures').insert([data])
+      const { error } = await supabase.from('voitures').insert([savedData])
       if (!error) { revalidate(); showToast('Véhicule ajouté avec succès'); await loadVoitures(); setMode('liste') }
       else showToast('Erreur lors de l\'ajout', 'err')
     }
+  }
+
+  async function handleSave(data) {
+    if (data.statut === 'vendu' && data.photos?.length > 1) {
+      setConfirmModal({
+        mainPhoto:      data.photos[0],
+        photosToDelete: data.photos.slice(1),
+        onConfirm:      () => doSave(data, true),
+        onCancel:       () => setConfirmModal(null),
+      })
+      return
+    }
+    await doSave(data, false)
   }
 
   async function handleDelete(id) {
@@ -402,6 +423,45 @@ export default function AdminPage() {
           toast.type === 'err' ? 'bg-red-600 text-white' : 'bg-emerald-600 text-white'
         }`}>
           {toast.type === 'err' ? '❌' : '✅'} {toast.msg}
+        </div>
+      )}
+
+      {/* Modal confirmation suppression photos */}
+      {confirmModal && (
+        <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center text-xl">⚠️</div>
+              <h3 className="text-lg font-black text-slate-900">Supprimer les photos ?</h3>
+            </div>
+            <p className="text-slate-600 text-sm mb-4 leading-relaxed">
+              Ce véhicule est marqué <strong>VENDU</strong>. Pour économiser l'espace Supabase, toutes les photos supplémentaires seront supprimées <strong>définitivement</strong>. Seule la photo principale sera conservée.
+            </p>
+            <div className="mb-4">
+              <p className="text-xs font-semibold text-green-600 mb-2">✅ Conservée — photo principale</p>
+              <img src={confirmModal.mainPhoto} className="w-28 h-20 object-cover rounded-xl border-2 border-green-400" />
+            </div>
+            <div className="mb-6">
+              <p className="text-xs font-semibold text-red-600 mb-2">
+                🗑 Supprimées définitivement — {confirmModal.photosToDelete.length} photo{confirmModal.photosToDelete.length > 1 ? 's' : ''}
+              </p>
+              <div className="flex gap-2 flex-wrap">
+                {confirmModal.photosToDelete.map((url, i) => (
+                  <img key={i} src={url} className="w-16 h-12 object-cover rounded-lg border-2 border-red-300 opacity-50" />
+                ))}
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={confirmModal.onConfirm}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2.5 rounded-xl transition-colors text-sm">
+                Confirmer et enregistrer
+              </button>
+              <button onClick={confirmModal.onCancel}
+                className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 rounded-xl transition-colors text-sm">
+                Annuler
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
