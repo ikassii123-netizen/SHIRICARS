@@ -18,6 +18,7 @@ export default function CarModal({ voiture, onClose }) {
   const [zoomScale, setZoomScale] = useState(1)
   const [panX, setPanX] = useState(0)
   const [panY, setPanY] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
   const touchStartX = useRef(null)
   const photoIdxRef = useRef(0)
   const lightboxRef = useRef(false)
@@ -25,11 +26,28 @@ export default function CarModal({ voiture, onClose }) {
   const hasDraggedRef = useRef(false)
   const dragStartRef = useRef({ x: 0, y: 0 })
   const pinchStartRef = useRef(null)
-  const [isDragging, setIsDragging] = useState(false)
+  const imgRef = useRef(null)
+  // Refs para evitar closures obsoletas en los handlers del useEffect
+  const zoomScaleRef = useRef(1)
+  const panXRef = useRef(0)
+  const panYRef = useRef(0)
+  zoomScaleRef.current = zoomScale
+  panXRef.current = panX
+  panYRef.current = panY
   photoIdxRef.current = photoIdx
   lightboxRef.current = lightboxOpen
 
   const photos = voiture?.photos?.length ? voiture.photos : [PLACEHOLDER]
+
+  const clampPan = (px, py, scale) => {
+    if (!imgRef.current) return { px, py }
+    const maxX = (imgRef.current.offsetWidth  * (scale - 1)) / 2
+    const maxY = (imgRef.current.offsetHeight * (scale - 1)) / 2
+    return {
+      px: Math.max(-maxX, Math.min(maxX, px)),
+      py: Math.max(-maxY, Math.min(maxY, py)),
+    }
+  }
 
   const resetZoom = () => { setZoomScale(1); setPanX(0); setPanY(0) }
 
@@ -55,8 +73,10 @@ export default function CarModal({ voiture, onClose }) {
   const handleLightboxMouseMove = (e) => {
     if (!isDraggingRef.current) return
     hasDraggedRef.current = true
-    setPanX(e.clientX - dragStartRef.current.x)
-    setPanY(e.clientY - dragStartRef.current.y)
+    const raw = { px: e.clientX - dragStartRef.current.x, py: e.clientY - dragStartRef.current.y }
+    const clamped = clampPan(raw.px, raw.py, zoomScale)
+    setPanX(clamped.px)
+    setPanY(clamped.py)
   }
   const handleLightboxMouseUp = () => { isDraggingRef.current = false; setIsDragging(false) }
 
@@ -68,8 +88,10 @@ export default function CarModal({ voiture, onClose }) {
     const cx = rect.left + rect.width / 2
     const cy = rect.top + rect.height / 2
     const newScale = 2.5
-    setPanX((e.clientX - cx) * (1 - newScale))
-    setPanY((e.clientY - cy) * (1 - newScale))
+    const raw = { px: (e.clientX - cx) * (1 - newScale), py: (e.clientY - cy) * (1 - newScale) }
+    const clamped = clampPan(raw.px, raw.py, newScale)
+    setPanX(clamped.px)
+    setPanY(clamped.py)
     setZoomScale(newScale)
   }
 
@@ -85,12 +107,12 @@ export default function CarModal({ voiture, onClose }) {
     const onTouchStart = (e) => {
       if (e.touches.length === 2) {
         e.preventDefault()
-        pinchStartRef.current = { distance: getPinchDist(e.touches), scale: zoomScale }
-      } else if (e.touches.length === 1 && zoomScale > 1) {
+        pinchStartRef.current = { distance: getPinchDist(e.touches), scale: zoomScaleRef.current }
+      } else if (e.touches.length === 1 && zoomScaleRef.current > 1) {
         e.preventDefault()
         const t = e.touches[0]
         isDraggingRef.current = true
-        dragStartRef.current = { x: t.clientX - panX, y: t.clientY - panY }
+        dragStartRef.current = { x: t.clientX - panXRef.current, y: t.clientY - panYRef.current }
       }
     }
 
@@ -99,12 +121,19 @@ export default function CarModal({ voiture, onClose }) {
         e.preventDefault()
         const newDist = getPinchDist(e.touches)
         const newScale = Math.min(4, Math.max(1, pinchStartRef.current.scale * (newDist / pinchStartRef.current.distance)))
-        setZoomScale(newScale)
-        if (newScale <= 1) { setPanX(0); setPanY(0) }
-      } else if (e.touches.length === 1 && isDraggingRef.current && zoomScale > 1) {
+        if (newScale <= 1) { setZoomScale(1); setPanX(0); setPanY(0) }
+        else {
+          const clamped = clampPan(panXRef.current, panYRef.current, newScale)
+          setZoomScale(newScale)
+          setPanX(clamped.px)
+          setPanY(clamped.py)
+        }
+      } else if (e.touches.length === 1 && isDraggingRef.current && zoomScaleRef.current > 1) {
         e.preventDefault()
-        setPanX(e.touches[0].clientX - dragStartRef.current.x)
-        setPanY(e.touches[0].clientY - dragStartRef.current.y)
+        const raw = { px: e.touches[0].clientX - dragStartRef.current.x, py: e.touches[0].clientY - dragStartRef.current.y }
+        const clamped = clampPan(raw.px, raw.py, zoomScaleRef.current)
+        setPanX(clamped.px)
+        setPanY(clamped.py)
       }
     }
 
@@ -121,7 +150,7 @@ export default function CarModal({ voiture, onClose }) {
       document.removeEventListener('touchmove', onTouchMove)
       document.removeEventListener('touchend', onTouchEnd)
     }
-  }, [lightboxOpen, zoomScale, panX, panY])
+  }, [lightboxOpen])
 
   const handleTouchStart = (e) => { touchStartX.current = e.touches[0].clientX }
   const handleTouchEnd = (e) => {
@@ -404,6 +433,7 @@ export default function CarModal({ voiture, onClose }) {
             <img
               src={photos[photoIdx]}
               alt={`${voiture.marque} ${voiture.modele}`}
+              ref={imgRef}
               className="max-w-[90vw] max-h-[90vh] object-contain select-none"
               style={{
                 transform: `translate(${panX}px, ${panY}px) scale(${zoomScale})`,
