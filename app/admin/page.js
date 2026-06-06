@@ -256,35 +256,34 @@ export default function AdminPage() {
   }
 
   async function handleUpload(files, form, setForm) {
-    const FORMATOS_VALIDOS = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif', 'image/bmp', 'image/tiff']
     const lista = Array.from(files)
 
-    const invalidos = lista.filter(f => !FORMATOS_VALIDOS.includes(f.type))
-    if (invalidos.length) {
-      const nombres = invalidos.map(f => f.name).join(', ')
-      showToast(`Format non compatible : ${nombres}. Utilisez JPG, PNG, WebP ou AVIF.`, 'err')
-      const validos = lista.filter(f => FORMATOS_VALIDOS.includes(f.type))
-      if (!validos.length) return
+    const heic = lista.filter(f => f.type === 'image/heic' || f.type === 'image/heif' || f.name.toLowerCase().endsWith('.heic') || f.name.toLowerCase().endsWith('.heif'))
+    if (heic.length) {
+      showToast('Format HEIC non supporté. Sur iPhone : Réglages → Appareil photo → Formats → Compatible.', 'err')
+      const autres = lista.filter(f => !heic.includes(f))
+      if (!autres.length) return
     }
 
+    const aUploader = lista.filter(f => !heic.includes(f))
     setUploading(true)
     const urls = [...(form.photos || [])]
-    let errores = 0
-    for (const file of lista.filter(f => FORMATOS_VALIDOS.includes(f.type))) {
-      const ext  = file.name.split('.').pop()
+    let erreurs = 0
+    for (const file of aUploader) {
+      const ext  = file.name.split('.').pop() || 'jpg'
       const name = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
       const { data, error } = await supabase.storage.from('voitures').upload(name, file, { upsert: false })
       if (!error) {
         const { data: { publicUrl } } = supabase.storage.from('voitures').getPublicUrl(data.path)
         urls.push(publicUrl)
       } else {
-        errores++
+        erreurs++
       }
     }
     setForm(f => ({ ...f, photos: urls }))
     setUploading(false)
-    if (errores > 0) showToast(`${errores} photo(s) n'ont pas pu être envoyées. Réessayez.`, 'err')
-    else if (lista.filter(f => FORMATOS_VALIDOS.includes(f.type)).length > 0) showToast('Photos envoyées avec succès')
+    if (erreurs > 0) showToast(`${erreurs} photo(s) n'ont pas pu être envoyées. Réessayez.`, 'err')
+    else if (aUploader.length > 0) showToast('Photos envoyées avec succès')
   }
 
   async function handleSave(data) {
