@@ -152,18 +152,43 @@ function VoitureForm({ initial, onSave, onCancel, uploading, onUpload }) {
         {/* Photos existantes */}
         {form.photos?.length > 0 && (
           <div className="mb-3">
-            <p className="text-xs text-slate-400 mb-2">{form.photos.length} photo{form.photos.length !== 1 ? 's' : ''} jointe{form.photos.length !== 1 ? 's' : ''} — survolez pour supprimer</p>
+            <p className="text-xs text-slate-400 mb-2">{form.photos.length} photo{form.photos.length !== 1 ? 's' : ''} — la 1ère est la photo principale</p>
             <div className="flex gap-2 flex-wrap">
-              {form.photos.map((url, i) => (
-                <div key={i} className="relative group">
-                  <img src={url} className="w-24 h-16 object-cover rounded-lg border border-slate-200" />
-                  <button type="button"
-                    onClick={() => set('photos', form.photos.filter((_, j) => j !== i))}
-                    className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    ×
-                  </button>
-                </div>
-              ))}
+              {form.photos.map((url, i) => {
+                const movePhoto = (from, to) => {
+                  const arr = [...form.photos]
+                  const [item] = arr.splice(from, 1)
+                  arr.splice(to, 0, item)
+                  set('photos', arr)
+                }
+                return (
+                  <div key={url} className="relative group flex flex-col items-center gap-1">
+                    <div className="relative">
+                      <img src={url} className={`w-24 h-16 object-cover rounded-lg border-2 ${i === 0 ? 'border-green-500' : 'border-slate-200'}`} />
+                      {i === 0 && (
+                        <span className="absolute bottom-1 left-1 bg-green-500 text-white text-[9px] font-bold px-1 rounded">
+                          PRINCIPALE
+                        </span>
+                      )}
+                      <button type="button"
+                        onClick={() => set('photos', form.photos.filter((_, j) => j !== i))}
+                        className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        ×
+                      </button>
+                    </div>
+                    <div className="flex gap-1">
+                      <button type="button" onClick={() => movePhoto(i, i - 1)} disabled={i === 0}
+                        className="w-6 h-5 rounded text-xs bg-slate-100 hover:bg-slate-200 disabled:opacity-20 disabled:cursor-not-allowed flex items-center justify-center">
+                        ←
+                      </button>
+                      <button type="button" onClick={() => movePhoto(i, i + 1)} disabled={i === form.photos.length - 1}
+                        className="w-6 h-5 rounded text-xs bg-slate-100 hover:bg-slate-200 disabled:opacity-20 disabled:cursor-not-allowed flex items-center justify-center">
+                        →
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           </div>
         )}
