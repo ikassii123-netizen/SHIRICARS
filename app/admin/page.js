@@ -175,7 +175,7 @@ function VoitureForm({ initial, onSave, onCancel, uploading, onUpload }) {
           <span className="text-sm text-slate-500">
             {uploading ? 'Envoi en cours...' : form.photos?.length > 0 ? '+ Ajouter d\'autres photos' : 'Cliquez pour ajouter des photos'}
           </span>
-          <input type="file" accept=".jpg,.jpeg,.png,.webp,.avif,.gif,.bmp,.tiff" multiple className="hidden"
+          <input type="file" accept="image/*" multiple className="hidden"
             onChange={e => onUpload(e.target.files, form, f => setForm(f))} disabled={uploading} />
         </label>
       </div>
