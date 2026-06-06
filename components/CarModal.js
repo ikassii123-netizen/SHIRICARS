@@ -23,7 +23,7 @@ export default function CarModal({ voiture, onClose }) {
   const lightboxRef = useRef(false)
   const isDraggingRef = useRef(false)
   const dragStartRef = useRef({ x: 0, y: 0 })
-  const lightboxContainerRef = useRef(null)
+  const [isDragging, setIsDragging] = useState(false)
   photoIdxRef.current = photoIdx
   lightboxRef.current = lightboxOpen
 
@@ -44,7 +44,9 @@ export default function CarModal({ voiture, onClose }) {
   const handleLightboxMouseDown = (e) => {
     if (zoomScale <= 1) return
     e.preventDefault()
+    e.stopPropagation()
     isDraggingRef.current = true
+    setIsDragging(true)
     dragStartRef.current = { x: e.clientX - panX, y: e.clientY - panY }
   }
   const handleLightboxMouseMove = (e) => {
@@ -52,12 +54,10 @@ export default function CarModal({ voiture, onClose }) {
     setPanX(e.clientX - dragStartRef.current.x)
     setPanY(e.clientY - dragStartRef.current.y)
   }
-  const handleLightboxMouseUp = () => { isDraggingRef.current = false }
+  const handleLightboxMouseUp = () => { isDraggingRef.current = false; setIsDragging(false) }
 
   useEffect(() => {
     if (!lightboxOpen) return
-    const el = lightboxContainerRef.current
-    if (!el) return
     const onWheel = (e) => {
       e.preventDefault()
       const factor = e.deltaY < 0 ? 1.15 : 0.87
@@ -67,8 +67,8 @@ export default function CarModal({ voiture, onClose }) {
         return next
       })
     }
-    el.addEventListener('wheel', onWheel, { passive: false })
-    return () => el.removeEventListener('wheel', onWheel)
+    document.addEventListener('wheel', onWheel, { passive: false })
+    return () => document.removeEventListener('wheel', onWheel)
   }, [lightboxOpen])
 
   const handleTouchStart = (e) => { touchStartX.current = e.touches[0].clientX }
@@ -317,7 +317,6 @@ export default function CarModal({ voiture, onClose }) {
       {/* Lightbox pantalla completa con zoom rueda + arrastrar */}
       {lightboxOpen && (
         <div
-          ref={lightboxContainerRef}
           className="fixed inset-0 z-[60] bg-black/95 flex items-center justify-center overflow-hidden"
           onClick={closeLightbox}
           onMouseMove={handleLightboxMouseMove}
@@ -357,8 +356,8 @@ export default function CarModal({ voiture, onClose }) {
               style={{
                 transform: `translate(${panX}px, ${panY}px) scale(${zoomScale})`,
                 transformOrigin: 'center center',
-                cursor: zoomScale > 1 ? 'grab' : 'zoom-in',
-                transition: isDraggingRef.current ? 'none' : 'transform 0.1s ease',
+                cursor: zoomScale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'zoom-in',
+                transition: isDragging ? 'none' : 'transform 0.15s ease',
               }}
               onMouseDown={handleLightboxMouseDown}
               onDoubleClick={resetZoom}
