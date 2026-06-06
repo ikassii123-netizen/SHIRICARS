@@ -244,6 +244,15 @@ export default function CarModal({ voiture, onClose, whatsapp = '', onFilterDisp
                   Agrandir
                 </div>
 
+                {/* Overlay diagonal VENDU / RÉSERVÉ */}
+                {(vendu || reserve) && (
+                  <div className="absolute inset-0 flex items-center justify-center z-20 overflow-hidden pointer-events-none">
+                    <div className={`w-[140%] py-3 text-center font-black text-white text-lg tracking-widest shadow-2xl transform rotate-[-28deg] ${vendu ? 'bg-red-600/90' : 'bg-amber-500/90'}`}>
+                      {vendu ? 'VENDU' : 'RÉSERVÉ'}
+                    </div>
+                  </div>
+                )}
+
                 {/* Badge statut */}
                 <div className="absolute top-3 left-3 z-10">
                   <span className={

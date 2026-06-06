@@ -125,7 +125,7 @@ export default function CarCard({ voiture, onClick }) {
       </div>
 
       {/* Content */}
-      <div className="p-4">
+      <div className={`p-4 ${vendu ? 'bg-slate-50' : ''}`}>
         <div className="mb-3">
           <h3 className="text-lg font-bold text-slate-900 leading-tight">
             {voiture.marque} {voiture.modele}
@@ -135,13 +135,13 @@ export default function CarCard({ voiture, onClick }) {
 
         {/* Specs */}
         <div className="flex flex-wrap gap-2 mb-4">
-          <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-lg font-medium">
+          <span className={`text-xs bg-slate-100 px-2 py-1 rounded-lg font-medium ${vendu ? 'text-slate-400' : 'text-slate-600'}`}>
             {formatKm(voiture.kilometrage)}
           </span>
-          <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-lg font-medium">
+          <span className={`text-xs bg-slate-100 px-2 py-1 rounded-lg font-medium ${vendu ? 'text-slate-400' : 'text-slate-600'}`}>
             {CARBURANT_ICON[voiture.carburant] || '⛽'} {voiture.carburant}
           </span>
-          <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-lg font-medium">
+          <span className={`text-xs bg-slate-100 px-2 py-1 rounded-lg font-medium ${vendu ? 'text-slate-400' : 'text-slate-600'}`}>
             {voiture.transmission}
           </span>
         </div>
@@ -151,7 +151,7 @@ export default function CarCard({ voiture, onClick }) {
           <span className={`text-2xl font-black ${vendu ? 'text-slate-500 line-through' : 'text-marine-700'}`}>
             {formatPrix(voiture.prix)}
           </span>
-          {voiture.prix_barre && voiture.prix_barre !== voiture.prix && (
+          {!vendu && voiture.prix_barre && voiture.prix_barre !== voiture.prix && (
             <span className="text-slate-400 line-through text-sm font-medium">
               {formatPrix(voiture.prix_barre)}
             </span>

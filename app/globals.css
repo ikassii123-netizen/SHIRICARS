@@ -20,7 +20,7 @@
     @apply bg-emerald-100 text-emerald-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide;
   }
   .badge-vendu {
-    @apply bg-slate-200 text-slate-500 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide;
+    @apply bg-red-100 text-red-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide;
   }
   .badge-reserve {
     @apply bg-amber-100 text-amber-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide;
