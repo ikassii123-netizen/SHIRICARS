@@ -13,6 +13,7 @@ const DEFAULTS = {
 
 export default function ContactForm() {
   const [form, setForm]       = useState({ prenom: '', nom: '', email: '', telephone: '', message: '' })
+  const [rgpd, setRgpd]       = useState(false)
   const [etat, setEtat]       = useState('idle')
   const [infos, setInfos]     = useState(DEFAULTS)
 
@@ -49,6 +50,7 @@ export default function ContactForm() {
 
     setEtat('success')
     setForm({ prenom: '', nom: '', email: '', telephone: '', message: '' })
+    setRgpd(false)
   }
 
   const coordonnees = [
@@ -168,7 +170,24 @@ export default function ContactForm() {
                 {etat === 'error' && (
                   <p className="text-red-400 text-sm">Une erreur est survenue. Veuillez réessayer.</p>
                 )}
-                <button type="submit" disabled={etat === 'loading'} className="btn-primary w-full disabled:opacity-60 disabled:cursor-not-allowed">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    required
+                    checked={rgpd}
+                    onChange={e => setRgpd(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 rounded accent-red-500 flex-shrink-0"
+                  />
+                  <span className="text-slate-400 text-xs leading-relaxed">
+                    J'accepte que mes données personnelles soient utilisées pour traiter ma demande,
+                    conformément à notre{' '}
+                    <a href="/mentions-legales" target="_blank" className="text-slate-300 underline hover:text-white">
+                      politique de confidentialité
+                    </a>
+                    . Elles ne seront jamais transmises à des tiers.
+                  </span>
+                </label>
+                <button type="submit" disabled={etat === 'loading' || !rgpd} className="btn-primary w-full disabled:opacity-60 disabled:cursor-not-allowed">
                   {etat === 'loading' ? 'Envoi en cours...' : 'Envoyer le Message'}
                 </button>
               </form>
