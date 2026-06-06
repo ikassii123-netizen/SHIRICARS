@@ -86,7 +86,8 @@ export default function CarModal({ voiture, onClose }) {
       if (e.touches.length === 2) {
         e.preventDefault()
         pinchStartRef.current = { distance: getPinchDist(e.touches), scale: zoomScale }
-      } else if (e.touches.length === 1) {
+      } else if (e.touches.length === 1 && zoomScale > 1) {
+        e.preventDefault()
         const t = e.touches[0]
         isDraggingRef.current = true
         dragStartRef.current = { x: t.clientX - panX, y: t.clientY - panY }
@@ -100,7 +101,7 @@ export default function CarModal({ voiture, onClose }) {
         const newScale = Math.min(4, Math.max(1, pinchStartRef.current.scale * (newDist / pinchStartRef.current.distance)))
         setZoomScale(newScale)
         if (newScale <= 1) { setPanX(0); setPanY(0) }
-      } else if (e.touches.length === 1 && isDraggingRef.current) {
+      } else if (e.touches.length === 1 && isDraggingRef.current && zoomScale > 1) {
         e.preventDefault()
         setPanX(e.touches[0].clientX - dragStartRef.current.x)
         setPanY(e.touches[0].clientY - dragStartRef.current.y)
