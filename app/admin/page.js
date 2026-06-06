@@ -274,9 +274,9 @@ export default function AdminPage() {
     for (const file of aUploader) {
       const ext  = file.name.split('.').pop() || 'jpg'
       const name = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-      const { data, error } = await supabase.storage.from('coches').upload(name, file, { upsert: false })
+      const { error } = await supabase.storage.from('coches').upload(name, file, { upsert: false })
       if (!error) {
-        const { data: { publicUrl } } = supabase.storage.from('coches').getPublicUrl(data.path)
+        const publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/coches/${name}`
         urls.push(publicUrl)
       } else {
         erreurs++
