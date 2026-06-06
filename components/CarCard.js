@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { Fuel, Settings2, Gauge, Zap, Palette } from 'lucide-react'
 
 const PLACEHOLDER = 'https://images.unsplash.com/photo-1583267746897-2cf415887172?w=600&q=80'
 
@@ -14,14 +15,6 @@ function formatKm(n) {
 function remise(prixBarre, prix) {
   if (!prixBarre || prixBarre === prix) return null
   return Math.round(((prix - prixBarre) / prixBarre) * 100)
-}
-
-const CARBURANT_ICON = {
-  'Essence': '⛽',
-  'Diesel': '🛢️',
-  'Hybride': '🔋',
-  'Hybride Rechargeable': '🔌',
-  'Électrique': '⚡',
 }
 
 const COULEUR_DOT = {
@@ -141,27 +134,19 @@ export default function CarCard({ voiture, onClick }) {
 
         {/* Specs */}
         <div className="flex flex-wrap gap-2 mb-4">
-          <span className={`text-xs bg-slate-100 px-2 py-1 rounded-lg font-medium ${vendu ? 'text-slate-400' : 'text-slate-600'}`}>
-            {formatKm(voiture.kilometrage)}
-          </span>
-          <span className={`text-xs bg-slate-100 px-2 py-1 rounded-lg font-medium ${vendu ? 'text-slate-400' : 'text-slate-600'}`}>
-            {CARBURANT_ICON[voiture.carburant] || '⛽'} {voiture.carburant}
-          </span>
-          <span className={`text-xs bg-slate-100 px-2 py-1 rounded-lg font-medium ${vendu ? 'text-slate-400' : 'text-slate-600'}`}>
-            {voiture.transmission}
-          </span>
-          {voiture.puissance_cv && (
-            <span className={`text-xs bg-slate-100 px-2 py-1 rounded-lg font-medium ${vendu ? 'text-slate-400' : 'text-slate-600'}`}>
-              {voiture.puissance_cv} CV
+          {[
+            { icon: <Gauge size={12} />, label: formatKm(voiture.kilometrage) },
+            { icon: <Fuel size={12} />, label: voiture.carburant },
+            { icon: <Settings2 size={12} />, label: voiture.transmission },
+            voiture.puissance_cv ? { icon: <Zap size={12} />, label: `${voiture.puissance_cv} CV` } : null,
+            voiture.couleur ? { icon: <Palette size={12} />, label: voiture.couleur, dot: COULEUR_DOT[voiture.couleur] } : null,
+          ].filter(Boolean).map(({ icon, label, dot }) => (
+            <span key={label} className={`text-xs bg-slate-100 px-2 py-1 rounded-lg font-medium flex items-center gap-1.5 ${vendu ? 'text-slate-400' : 'text-slate-500'}`}>
+              <span className="flex-shrink-0">{icon}</span>
+              {dot && <span className="w-2 h-2 rounded-full border border-slate-300 flex-shrink-0" style={{ backgroundColor: dot }} />}
+              {label}
             </span>
-          )}
-          {voiture.couleur && (
-            <span className={`text-xs bg-slate-100 px-2 py-1 rounded-lg font-medium flex items-center gap-1.5 ${vendu ? 'text-slate-400' : 'text-slate-600'}`}>
-              <span className="w-2.5 h-2.5 rounded-full border border-slate-300 flex-shrink-0"
-                style={{ backgroundColor: COULEUR_DOT[voiture.couleur] || '#888' }} />
-              {voiture.couleur}
-            </span>
-          )}
+          ))}
         </div>
 
         {/* Price */}

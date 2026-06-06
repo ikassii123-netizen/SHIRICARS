@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
+import { Fuel, Settings2, Gauge, Calendar, Palette, Zap, DoorOpen, User, Cog, FileText, ShieldCheck } from 'lucide-react'
 
 const PLACEHOLDER = 'https://images.unsplash.com/photo-1583267746897-2cf415887172?w=800&q=80'
 
@@ -405,21 +406,21 @@ export default function CarModal({ voiture, onClose, whatsapp = '', onFilterDisp
               <h3 className="font-bold text-slate-900 mb-3">Caractéristiques</h3>
               <div className="rounded-2xl border border-slate-100 overflow-hidden divide-y divide-slate-100">
                 {[
-                  { icon: '⛽', label: 'Carburant',           value: voiture.carburant },
-                  { icon: '⚙️', label: 'Transmission',        value: voiture.transmission },
-                  { icon: '📏', label: 'Kilométrage',          value: formatKm(voiture.kilometrage) },
-                  { icon: '📅', label: 'Année',               value: voiture.annee },
-                  voiture.couleur           ? { icon: '🎨', label: 'Couleur',             value: voiture.couleur } : null,
-                  voiture.puissance_cv      ? { icon: '⚡', label: 'Puissance',           value: `${voiture.puissance_cv} CV` } : null,
-                  voiture.nb_portes         ? { icon: '🚪', label: 'Portes',              value: `${voiture.nb_portes} portes` } : null,
-                  voiture.nb_proprietaires  ? { icon: '👤', label: 'Propriétaires',       value: voiture.nb_proprietaires === 1 ? '1ère main' : `${voiture.nb_proprietaires} propriétaires` } : null,
-                  voiture.cylindree         ? { icon: '🔩', label: 'Cylindrée',           value: `${voiture.cylindree} cm³` } : null,
-                  voiture.puissance_fiscale ? { icon: '📋', label: 'Puiss. fiscale',      value: `${voiture.puissance_fiscale} CV fiscaux` } : null,
-                  voiture.controle_technique ? { icon: '🔧', label: 'Contrôle Technique', value: voiture.controle_technique } : null,
+                  { icon: <Fuel size={15} />,        label: 'Carburant',           value: voiture.carburant },
+                  { icon: <Settings2 size={15} />,   label: 'Transmission',        value: voiture.transmission },
+                  { icon: <Gauge size={15} />,        label: 'Kilométrage',         value: formatKm(voiture.kilometrage) },
+                  { icon: <Calendar size={15} />,     label: 'Année',               value: voiture.annee },
+                  voiture.couleur           ? { icon: <Palette size={15} />,     label: 'Couleur',             value: voiture.couleur } : null,
+                  voiture.puissance_cv      ? { icon: <Zap size={15} />,         label: 'Puissance',           value: `${voiture.puissance_cv} CV` } : null,
+                  voiture.nb_portes         ? { icon: <DoorOpen size={15} />,    label: 'Portes',              value: `${voiture.nb_portes} portes` } : null,
+                  voiture.nb_proprietaires  ? { icon: <User size={15} />,        label: 'Propriétaires',       value: voiture.nb_proprietaires === 1 ? '1ère main' : `${voiture.nb_proprietaires} propriétaires` } : null,
+                  voiture.cylindree         ? { icon: <Cog size={15} />,         label: 'Cylindrée',           value: `${voiture.cylindree} cm³` } : null,
+                  voiture.puissance_fiscale ? { icon: <FileText size={15} />,    label: 'Puiss. fiscale',      value: `${voiture.puissance_fiscale} CV fiscaux` } : null,
+                  voiture.controle_technique ? { icon: <ShieldCheck size={15} />, label: 'Contrôle Technique', value: voiture.controle_technique } : null,
                 ].filter(Boolean).map(({ icon, label, value }) => (
                   <div key={label} className="flex items-center justify-between px-4 py-3 bg-white hover:bg-slate-50 transition-colors">
                     <span className="flex items-center gap-2.5 text-sm text-slate-500 font-medium">
-                      <span className="text-base w-5 text-center">{icon}</span>
+                      <span className="text-slate-400 flex-shrink-0">{icon}</span>
                       {label}
                     </span>
                     <span className="text-sm font-bold text-slate-800">{value}</span>
