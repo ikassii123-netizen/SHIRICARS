@@ -26,7 +26,7 @@ function toggle(arr, val) {
   return arr.includes(val) ? arr.filter(x => x !== val) : [...arr, val]
 }
 
-export default function CatalogueClient({ voitures }) {
+export default function CatalogueClient({ voitures, whatsapp = '' }) {
   const [filtre, setFiltre]             = useState('all')
   const [recherche, setRecherche]       = useState('')
   const [selectedVoiture, setSelected]  = useState(null)
@@ -291,7 +291,12 @@ export default function CatalogueClient({ voitures }) {
       </section>
 
       {selectedVoiture && (
-        <CarModal voiture={selectedVoiture} onClose={() => setSelected(null)} />
+        <CarModal
+          voiture={selectedVoiture}
+          onClose={() => setSelected(null)}
+          whatsapp={whatsapp}
+          onFilterDisponible={() => { setFiltre('disponible'); setSelected(null) }}
+        />
       )}
     </>
   )

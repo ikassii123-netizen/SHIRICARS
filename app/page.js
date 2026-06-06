@@ -34,7 +34,7 @@ async function getParametres() {
   const { data } = await supabase
     .from('parametres')
     .select('cle, valeur')
-    .in('cle', ['nom_entreprise', 'slogan'])
+    .in('cle', ['nom_entreprise', 'slogan', 'whatsapp'])
   if (!data?.length) return {}
   return Object.fromEntries(data.map(r => [r.cle, r.valeur]))
 }
@@ -43,6 +43,7 @@ export default async function HomePage() {
   const [voitures, params] = await Promise.all([getVoitures(), getParametres()])
   const nomEntreprise = params.nom_entreprise || 'SY CAR'
   const slogan = params.slogan || 'La confiance, avant tout'
+  const whatsapp = params.whatsapp || ''
 
   return (
     <div className="min-h-screen">
@@ -77,7 +78,7 @@ export default async function HomePage() {
       </section>
 
       {/* Catalogue + Stats (Client Component pour filtres interactifs) */}
-      <CatalogueClient voitures={voitures} />
+      <CatalogueClient voitures={voitures} whatsapp={whatsapp} />
 
       {/* Contact */}
       <ContactForm />

@@ -11,7 +11,7 @@ function formatKm(n) {
   return new Intl.NumberFormat('fr-FR').format(n) + ' km'
 }
 
-export default function CarModal({ voiture, onClose }) {
+export default function CarModal({ voiture, onClose, whatsapp = '', onFilterDisponible }) {
   const [photoIdx, setPhotoIdx] = useState(0)
   const [fade, setFade] = useState(true)
   const [lightboxOpen, setLightboxOpen] = useState(false)
@@ -382,15 +382,35 @@ export default function CarModal({ voiture, onClose }) {
             )}
 
             {/* CTA */}
-            {!vendu && (
+            {!vendu && !reserve && (
               <a
                 href="#contact"
                 onClick={onClose}
-                className={`w-full text-center block ${reserve ? 'btn-secondary border-amber-500 text-amber-700 hover:bg-amber-50' : 'btn-primary'}`}
+                className="w-full text-center block btn-primary"
               >
-                {reserve
-                  ? "Ce véhicule est réservé — Me mettre sur liste d'attente"
-                  : "Je suis intéressé — Nous contacter"}
+                Je suis intéressé — Nous contacter
+              </a>
+            )}
+            {reserve && (
+              <button
+                onClick={() => {
+                  onClose()
+                  if (onFilterDisponible) onFilterDisponible()
+                  document.getElementById('catalogue')?.scrollIntoView({ behavior: 'smooth' })
+                }}
+                className="w-full text-center block btn-primary"
+              >
+                Voir les véhicules disponibles
+              </button>
+            )}
+            {vendu && (
+              <a
+                href={`https://wa.me/${whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(`Bonjour, je suis intéressé par un véhicule similaire au ${voiture.marque} ${voiture.modele} (${voiture.annee}). Pouvez-vous m'informer si un modèle similaire est disponible ?`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full text-center block btn-primary bg-green-600 hover:bg-green-700 border-green-600 hover:border-green-700"
+              >
+                M'avertir d'une arrivée similaire
               </a>
             )}
           </div>
