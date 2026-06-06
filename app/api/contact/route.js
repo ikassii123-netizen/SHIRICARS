@@ -9,7 +9,7 @@ async function getConfig() {
   const { data } = await supabase
     .from('parametres')
     .select('cle, valeur')
-    .in('cle', ['email', 'resend_api_key', 'nom_entreprise', 'resend_from'])
+    .in('cle', ['email', 'resend_api_key', 'nom_entreprise', 'resend_from', 'adresse'])
   if (!data?.length) return {}
   return Object.fromEntries(data.map(r => [r.cle, r.valeur]))
 }
@@ -24,7 +24,8 @@ export async function POST(req) {
     }
 
     const resend     = new Resend(config.resend_api_key)
-    const entreprise = config.nom_entreprise || 'SHIRI CARS'
+    const entreprise = config.nom_entreprise || 'SY CAR'
+    const initiales  = entreprise.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
     const emailPro   = config.email
     // Si domaine vérifié dans Resend, utiliser ex: "contact@shiricars.fr"
     // Sinon laisser vide → utilise onboarding@resend.dev (envoi limité à l'email du compte Resend)
@@ -75,7 +76,7 @@ export async function POST(req) {
         <div style="font-family:sans-serif;max-width:600px;margin:0 auto">
           <div style="background:#0f172a;padding:24px;border-radius:12px 12px 0 0;text-align:center">
             <div style="width:48px;height:48px;background:#dc2626;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px">
-              <span style="color:white;font-weight:900;font-size:16px">SC</span>
+              <span style="color:white;font-weight:900;font-size:16px">${initiales}</span>
             </div>
             <h1 style="color:white;margin:0;font-size:20px">${entreprise}</h1>
           </div>
@@ -90,7 +91,7 @@ export async function POST(req) {
               <p style="margin:0;color:#334155;line-height:1.6;font-size:14px">${message.replace(/\n/g, '<br>')}</p>
             </div>
             <p style="color:#94a3b8;font-size:13px;margin:0">
-              Arras, Hauts-de-France<br>
+              ${config.adresse || ''}<br>
               <a href="mailto:${emailPro}" style="color:#2563eb">${emailPro}</a>
             </p>
           </div>

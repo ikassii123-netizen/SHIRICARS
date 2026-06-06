@@ -1,6 +1,6 @@
 import Link from 'next/link'
 
-export const metadata = { title: 'Page introuvable — SHIRI CARS' }
+export const metadata = { title: 'Page introuvable — SY CAR' }
 
 export default function NotFound() {
   return (

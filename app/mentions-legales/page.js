@@ -3,8 +3,10 @@ export const dynamic = 'force-dynamic'
 import Link from 'next/link'
 import { createClient } from '@supabase/supabase-js'
 
-export const metadata = {
-  title: 'Mentions Légales & Politique de Confidentialité — SHIRI CARS',
+export async function generateMetadata() {
+  const infos = await getInfos()
+  const nom = infos.nom_entreprise || 'SY CAR'
+  return { title: `Mentions Légales & Politique de Confidentialité — ${nom}` }
 }
 
 async function getInfos() {
@@ -22,7 +24,7 @@ async function getInfos() {
 
 export default async function MentionsLegales() {
   const infos = await getInfos()
-  const entreprise = infos.nom_entreprise || 'SHIRI CARS'
+  const entreprise = infos.nom_entreprise || 'SY CAR'
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
@@ -115,7 +117,7 @@ export default async function MentionsLegales() {
         <section>
           <h2 className="text-xl font-black text-slate-900 mb-3">7. Propriété intellectuelle</h2>
           <p className="text-slate-600 leading-relaxed">
-            L&apos;ensemble des contenus présents sur ce site (textes, images, logos) est la propriété exclusive de SHIRI CARS.
+            L&apos;ensemble des contenus présents sur ce site (textes, images, logos) est la propriété exclusive de {entreprise}.
             Toute reproduction, même partielle, est interdite sans autorisation préalable écrite.
           </p>
         </section>
@@ -131,7 +133,7 @@ export default async function MentionsLegales() {
       </div>
 
       <div className="border-t border-slate-200 py-6 text-center text-slate-400 text-sm">
-        © {new Date().getFullYear()} SHIRI CARS — Tous droits réservés
+        © {new Date().getFullYear()} {entreprise} — Tous droits réservés
       </div>
     </div>
   )

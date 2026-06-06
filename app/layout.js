@@ -21,13 +21,13 @@ export async function generateMetadata() {
     const params = await getSiteTitle()
     return {
       title: params.titre_site || 'SY CAR — Véhicules Français d\'Exception',
-      description: params.description_site || 'Découvrez notre sélection de voitures françaises de qualité. Peugeot, Renault, Citroën, DS — des véhicules vérifiés à prix transparents.',
-      keywords: 'voitures françaises, occasion, Peugeot, Renault, Citroën, DS, vente auto',
+      description: params.description_site || 'Découvrez notre sélection de véhicules de qualité, soigneusement vérifiés et proposés à des prix transparents.',
+      keywords: 'voiture occasion, vente automobile, véhicules vérifiés, prix transparents, achat voiture',
     }
   } catch {
     return {
       title: 'SY CAR — Véhicules Français d\'Exception',
-      description: 'Découvrez notre sélection de voitures françaises de qualité. Peugeot, Renault, Citroën, DS — des véhicules vérifiés à prix transparents.',
+      description: 'Découvrez notre sélection de véhicules de qualité, soigneusement vérifiés et proposés à des prix transparents.',
     }
   }
 }
