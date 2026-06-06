@@ -43,7 +43,7 @@ export default function CarCard({ voiture, onClick }) {
 
   return (
     <article
-      className={`card cursor-pointer group ${indispo ? 'opacity-80' : ''}`}
+      className="card cursor-pointer group"
       onClick={() => onClick(voiture)}
     >
       {/* Image */}
@@ -148,7 +148,7 @@ export default function CarCard({ voiture, onClick }) {
 
         {/* Price */}
         <div className="flex items-baseline gap-3">
-          <span className={`text-2xl font-black ${vendu ? 'text-slate-400' : 'text-marine-700'}`}>
+          <span className={`text-2xl font-black ${vendu ? 'text-slate-500 line-through' : 'text-marine-700'}`}>
             {formatPrix(voiture.prix)}
           </span>
           {voiture.prix_barre && voiture.prix_barre !== voiture.prix && (
