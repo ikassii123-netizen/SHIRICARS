@@ -15,23 +15,61 @@ export default function CarModal({ voiture, onClose }) {
   const [photoIdx, setPhotoIdx] = useState(0)
   const [fade, setFade] = useState(true)
   const [lightboxOpen, setLightboxOpen] = useState(false)
-  const [zoomed, setZoomed] = useState(false)
+  const [zoomScale, setZoomScale] = useState(1)
+  const [panX, setPanX] = useState(0)
+  const [panY, setPanY] = useState(0)
   const touchStartX = useRef(null)
   const photoIdxRef = useRef(0)
   const lightboxRef = useRef(false)
+  const isDraggingRef = useRef(false)
+  const dragStartRef = useRef({ x: 0, y: 0 })
+  const lightboxContainerRef = useRef(null)
   photoIdxRef.current = photoIdx
   lightboxRef.current = lightboxOpen
 
   const photos = voiture?.photos?.length ? voiture.photos : [PLACEHOLDER]
 
+  const resetZoom = () => { setZoomScale(1); setPanX(0); setPanY(0) }
+
   const goTo = (idx) => {
     if (!fade) return
+    resetZoom()
     setFade(false)
     setTimeout(() => { setPhotoIdx(idx); setFade(true) }, 150)
   }
 
-  const openLightbox = () => { setLightboxOpen(true); setZoomed(false) }
-  const closeLightbox = () => { setLightboxOpen(false); setZoomed(false) }
+  const openLightbox = () => { setLightboxOpen(true); resetZoom() }
+  const closeLightbox = () => { setLightboxOpen(false); resetZoom() }
+
+  const handleLightboxMouseDown = (e) => {
+    if (zoomScale <= 1) return
+    e.preventDefault()
+    isDraggingRef.current = true
+    dragStartRef.current = { x: e.clientX - panX, y: e.clientY - panY }
+  }
+  const handleLightboxMouseMove = (e) => {
+    if (!isDraggingRef.current) return
+    setPanX(e.clientX - dragStartRef.current.x)
+    setPanY(e.clientY - dragStartRef.current.y)
+  }
+  const handleLightboxMouseUp = () => { isDraggingRef.current = false }
+
+  useEffect(() => {
+    if (!lightboxOpen) return
+    const el = lightboxContainerRef.current
+    if (!el) return
+    const onWheel = (e) => {
+      e.preventDefault()
+      const factor = e.deltaY < 0 ? 1.15 : 0.87
+      setZoomScale(prev => {
+        const next = Math.min(4, Math.max(1, prev * factor))
+        if (next <= 1.05) { setPanX(0); setPanY(0); return 1 }
+        return next
+      })
+    }
+    el.addEventListener('wheel', onWheel, { passive: false })
+    return () => el.removeEventListener('wheel', onWheel)
+  }, [lightboxOpen])
 
   const handleTouchStart = (e) => { touchStartX.current = e.touches[0].clientX }
   const handleTouchEnd = (e) => {
@@ -276,74 +314,79 @@ export default function CarModal({ voiture, onClose }) {
         </div>
       </div>
 
-      {/* Lightbox (pantalla completa con zoom) */}
+      {/* Lightbox pantalla completa con zoom rueda + arrastrar */}
       {lightboxOpen && (
         <div
-          className="fixed inset-0 z-[60] bg-black/95 flex items-center justify-center"
+          ref={lightboxContainerRef}
+          className="fixed inset-0 z-[60] bg-black/95 flex items-center justify-center overflow-hidden"
           onClick={closeLightbox}
+          onMouseMove={handleLightboxMouseMove}
+          onMouseUp={handleLightboxMouseUp}
+          onMouseLeave={handleLightboxMouseUp}
         >
           {/* Botón cerrar */}
           <button
             onClick={closeLightbox}
             className="absolute top-4 right-4 z-10 w-10 h-10 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors"
-            aria-label="Fermer"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
 
-          {/* Contador */}
-          {photos.length > 1 && (
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-white/10 backdrop-blur-sm text-white text-sm font-semibold px-3 py-1.5 rounded-full">
-              {photoIdx + 1} / {photos.length}
-            </div>
-          )}
+          {/* Contador + nivel zoom */}
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 flex items-center gap-3">
+            {photos.length > 1 && (
+              <div className="bg-white/10 backdrop-blur-sm text-white text-sm font-semibold px-3 py-1.5 rounded-full">
+                {photoIdx + 1} / {photos.length}
+              </div>
+            )}
+            {zoomScale > 1 && (
+              <div className="bg-white/10 backdrop-blur-sm text-white text-sm font-semibold px-3 py-1.5 rounded-full">
+                {zoomScale.toFixed(1)}×
+              </div>
+            )}
+          </div>
 
-          {/* Imagen — clic alterna zoom */}
-          <div
-            className={`flex items-center justify-center transition-all duration-300 ${
-              zoomed ? 'overflow-auto w-full h-full' : 'max-w-[90vw] max-h-[85vh]'
-            }`}
-            onClick={e => e.stopPropagation()}
-          >
+          {/* Imagen con zoom y pan */}
+          <div className="w-full h-full flex items-center justify-center" onClick={e => e.stopPropagation()}>
             <img
               src={photos[photoIdx]}
               alt={`${voiture.marque} ${voiture.modele}`}
-              className={`transition-all duration-300 select-none ${
-                zoomed
-                  ? 'w-auto h-auto scale-150 cursor-zoom-out'
-                  : 'max-w-[90vw] max-h-[85vh] object-contain cursor-zoom-in'
-              }`}
-              onClick={() => setZoomed(z => !z)}
+              className="max-w-[90vw] max-h-[90vh] object-contain select-none"
+              style={{
+                transform: `translate(${panX}px, ${panY}px) scale(${zoomScale})`,
+                transformOrigin: 'center center',
+                cursor: zoomScale > 1 ? 'grab' : 'zoom-in',
+                transition: isDraggingRef.current ? 'none' : 'transform 0.1s ease',
+              }}
+              onMouseDown={handleLightboxMouseDown}
+              onDoubleClick={resetZoom}
               onError={e => { e.target.src = PLACEHOLDER }}
+              draggable={false}
             />
           </div>
 
-          {/* Hint zoom */}
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/50 text-xs">
-            {zoomed ? 'Cliquez pour réduire' : 'Cliquez sur la photo pour zoomer'}
+          {/* Hint */}
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/40 text-xs text-center pointer-events-none">
+            {zoomScale > 1 ? 'Glissez pour explorer · Double-clic pour réinitialiser' : 'Molette pour zoomer · Clic pour fermer'}
           </div>
 
-          {/* Flecha PREV lightbox */}
+          {/* Flechas */}
           {photos.length > 1 && (
             <button
               onClick={e => { e.stopPropagation(); goTo((photoIdx - 1 + photos.length) % photos.length) }}
               className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-11 h-11 flex items-center justify-center bg-white/10 hover:bg-white/25 text-white rounded-full transition-all duration-200 active:scale-90"
-              aria-label="Photo précédente"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
           )}
-
-          {/* Flecha NEXT lightbox */}
           {photos.length > 1 && (
             <button
               onClick={e => { e.stopPropagation(); goTo((photoIdx + 1) % photos.length) }}
               className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-11 h-11 flex items-center justify-center bg-white/10 hover:bg-white/25 text-white rounded-full transition-all duration-200 active:scale-90"
-              aria-label="Photo suivante"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
