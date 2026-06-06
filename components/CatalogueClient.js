@@ -1,5 +1,5 @@
 'use client'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import CarCard from './CarCard'
 import CarModal from './CarModal'
 
@@ -34,6 +34,24 @@ export default function CatalogueClient({ voitures, whatsapp = '' }) {
   const [panelOuvert, setPanelOuvert]   = useState(false)
 
   const set = (k, v) => setAvances(f => ({ ...f, [k]: v }))
+
+  // Auto-ouvre la modal si ?v=ID est dans l'URL
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('v')
+    if (id) {
+      const voiture = voitures.find(v => v.id === id)
+      if (voiture) setSelected(voiture)
+    }
+  }, [voitures])
+
+  // Met à jour l'URL quand une modal s'ouvre/ferme
+  useEffect(() => {
+    if (selectedVoiture) {
+      window.history.replaceState({}, '', `?v=${selectedVoiture.id}`)
+    } else {
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [selectedVoiture])
 
   const nbActifs = useMemo(() => {
     let n = 0

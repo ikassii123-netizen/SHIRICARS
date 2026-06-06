@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import { Fuel, Settings2, Gauge, Calendar, Palette, User, Cog, FileText, ShieldCheck, Zap } from 'lucide-react'
+import { Fuel, Settings2, Gauge, Calendar, Palette, User, Cog, FileText, ShieldCheck, Zap, Share2, Check } from 'lucide-react'
 
 const PistonIcon = ({ size = 15 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
@@ -37,6 +37,23 @@ export default function CarModal({ voiture, onClose, whatsapp = '', onFilterDisp
   const [photoIdx, setPhotoIdx] = useState(0)
   const [fade, setFade] = useState(true)
   const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [copied, setCopied] = useState(false)
+
+  const handleShare = async () => {
+    const url = window.location.href
+    try {
+      await navigator.clipboard.writeText(url)
+    } catch {
+      const el = document.createElement('input')
+      el.value = url
+      document.body.appendChild(el)
+      el.select()
+      document.execCommand('copy')
+      document.body.removeChild(el)
+    }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2500)
+  }
   const [zoomScale, setZoomScale] = useState(1)
   const [panX, setPanX] = useState(0)
   const [panY, setPanY] = useState(0)
@@ -264,14 +281,28 @@ export default function CarModal({ voiture, onClose, whatsapp = '', onFilterDisp
               </h2>
               <p className="text-slate-500">{voiture.annee} · {formatKm(voiture.kilometrage)}</p>
             </div>
-            <button
-              onClick={onClose}
-              className="ml-4 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl p-2 transition-colors"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            <div className="flex items-center gap-2 ml-4">
+              <button
+                onClick={handleShare}
+                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                  copied
+                    ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100 border border-transparent'
+                }`}
+                title="Copier le lien"
+              >
+                {copied ? <Check size={16} /> : <Share2 size={16} />}
+                <span className="hidden sm:inline">{copied ? 'Lien copié !' : 'Partager'}</span>
+              </button>
+              <button
+                onClick={onClose}
+                className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl p-2 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
           </div>
 
           <div className="p-6 space-y-6">
