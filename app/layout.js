@@ -20,13 +20,13 @@ export async function generateMetadata() {
   try {
     const params = await getSiteTitle()
     return {
-      title: params.titre_site || 'SY CAR — Véhicules Français d\'Exception',
+      title: params.titre_site || 'SY CAR — Votre spécialiste automobile',
       description: params.description_site || 'Découvrez notre sélection de véhicules de qualité, soigneusement vérifiés et proposés à des prix transparents.',
       keywords: 'voiture occasion, vente automobile, véhicules vérifiés, prix transparents, achat voiture',
     }
   } catch {
     return {
-      title: 'SY CAR — Véhicules Français d\'Exception',
+      title: 'SY CAR — Votre spécialiste automobile',
       description: 'Découvrez notre sélection de véhicules de qualité, soigneusement vérifiés et proposés à des prix transparents.',
     }
   }

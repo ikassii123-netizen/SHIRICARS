@@ -213,7 +213,14 @@ export default function AdminPage() {
     setTimeout(() => setToast(null), 3500)
   }
 
-  const revalidate = () => fetch('/api/revalidate', { method: 'POST' })
+  const revalidate = async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.access_token) return
+    fetch('/api/revalidate', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${session.access_token}` },
+    })
+  }
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -252,7 +259,6 @@ export default function AdminPage() {
     e.preventDefault()
     setSavingParams(true)
     const upserts = Object.entries(parametres)
-      .filter(([, valeur]) => valeur !== '')
       .map(([cle, valeur]) => ({ cle, valeur }))
     const { error } = await supabase.from('parametres').upsert(upserts, { onConflict: 'cle' })
     if (!error) { revalidate(); showToast('Paramètres sauvegardés avec succès') }
