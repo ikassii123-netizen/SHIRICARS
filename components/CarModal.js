@@ -41,6 +41,18 @@ export default function CarModal({ voiture, onClose, whatsapp = '', onFilterDisp
 
   const handleShare = async () => {
     const url = window.location.href
+    const title = voiture ? `${voiture.marque} ${voiture.modele} — ${voiture.prix?.toLocaleString('fr-FR')} €` : 'Véhicule'
+    const text = voiture ? `Regarde ce véhicule : ${voiture.marque} ${voiture.modele} ${voiture.annee || ''} à ${voiture.prix?.toLocaleString('fr-FR')} €` : ''
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, text, url })
+        return
+      } catch (err) {
+        if (err.name === 'AbortError') return
+      }
+    }
+
     try {
       await navigator.clipboard.writeText(url)
     } catch {
