@@ -18,12 +18,14 @@ export default function ContactForm() {
   const [infos, setInfos]     = useState(DEFAULTS)
 
   useEffect(() => {
-    supabase.from('parametres').select('cle, valeur').then(({ data }) => {
-      if (data?.length) {
-        const map = Object.fromEntries(data.map(r => [r.cle, r.valeur]))
-        setInfos(prev => ({ ...prev, ...map }))
-      }
-    })
+    supabase.from('parametres').select('cle, valeur')
+      .in('cle', ['adresse', 'telephone', 'email', 'horaires', 'maps_lien', 'maps_embed'])
+      .then(({ data }) => {
+        if (data?.length) {
+          const map = Object.fromEntries(data.map(r => [r.cle, r.valeur]))
+          setInfos(prev => ({ ...prev, ...map }))
+        }
+      })
   }, [])
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))

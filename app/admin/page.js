@@ -284,9 +284,8 @@ export default function AdminPage() {
   const [onglet, setOnglet]         = useState('voitures') // voitures | messages | parametres
   const [toast, setToast]           = useState(null)
   const [parametres, setParametres] = useState({
-    titre_site: '', description_site: '', nom_entreprise: '', slogan: '', adresse: '', telephone: '', email: '', horaires: '', resend_api_key: '', whatsapp: '', whatsapp_message: '', siret: '', tva: '', directeur_publication: '', maps_lien: '', maps_embed: ''
+    titre_site: '', description_site: '', nom_entreprise: '', slogan: '', adresse: '', telephone: '', email: '', horaires: '', whatsapp: '', whatsapp_message: '', siret: '', tva: '', directeur_publication: '', maps_lien: '', maps_embed: ''
   })
-  const [showResendKey, setShowResendKey] = useState(false)
   const [savingParams, setSavingParams] = useState(false)
   const [confirmModal, setConfirmModal] = useState(null)
   const [storageInfo, setStorageInfo] = useState(null)
@@ -809,22 +808,9 @@ export default function AdminPage() {
                         className="input-field" placeholder="contact@gmail.com" />
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-1">🔑 Clé API Resend (notifications email)</label>
-                      <div className="relative">
-                        <input
-                          type={showResendKey ? 'text' : 'password'}
-                          value={parametres.resend_api_key}
-                          onChange={e => setParametres(p => ({ ...p, resend_api_key: e.target.value }))}
-                          className="input-field pr-12"
-                          placeholder="re_xxxxxxxxxxxxxxxxxxxx"
-                        />
-                        <button type="button" onClick={() => setShowResendKey(v => !v)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                          {showResendKey ? '🙈' : '👁️'}
-                        </button>
-                      </div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-1">🔑 Notifications email (Resend)</label>
                       <p className="text-xs text-slate-400 mt-1">
-                        Disponible sur <strong>resend.com</strong> → API Keys. Une fois configuré, vous et votre client recevrez automatiquement un email à chaque nouvelle demande de contact.
+                        La clé API de Resend se configure désormais directement dans Vercel (variable d'environnement <code>RESEND_API_KEY</code>), et non plus ici, pour des raisons de sécurité.
                       </p>
                     </div>
                     <div>

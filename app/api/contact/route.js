@@ -17,7 +17,7 @@ async function getConfig() {
   const { data } = await supabase
     .from('parametres')
     .select('cle, valeur')
-    .in('cle', ['email', 'resend_api_key', 'nom_entreprise', 'resend_from', 'adresse'])
+    .in('cle', ['email', 'nom_entreprise', 'resend_from', 'adresse'])
   if (!data?.length) return {}
   return Object.fromEntries(data.map(r => [r.cle, r.valeur]))
 }
@@ -32,11 +32,11 @@ export async function POST(req) {
     const safeMessage   = escapeHtml(message).replace(/\n/g, '<br>')
 
     const config = await getConfig()
-    if (!config.resend_api_key || !config.email) {
+    if (!process.env.RESEND_API_KEY || !config.email) {
       return Response.json({ ok: true })
     }
 
-    const resend     = new Resend(config.resend_api_key)
+    const resend     = new Resend(process.env.RESEND_API_KEY)
     const entreprise = config.nom_entreprise || 'SY CAR'
     const initiales  = entreprise.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
     const emailPro   = config.email
