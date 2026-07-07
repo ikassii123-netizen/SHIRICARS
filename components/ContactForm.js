@@ -16,6 +16,7 @@ export default function ContactForm() {
   const [rgpd, setRgpd]       = useState(false)
   const [etat, setEtat]       = useState('idle')
   const [infos, setInfos]     = useState(DEFAULTS)
+  const [piege, setPiege]     = useState('') // honeypot anti-spam : doit rester vide
 
   useEffect(() => {
     supabase.from('parametres').select('cle, valeur')
@@ -32,6 +33,13 @@ export default function ContactForm() {
 
   async function handleSubmit(e) {
     e.preventDefault()
+    if (piege) {
+      // Rempli par un bot : on simule un succès sans rien envoyer
+      setEtat('success')
+      setForm({ prenom: '', nom: '', email: '', telephone: '', message: '' })
+      setRgpd(false)
+      return
+    }
     setEtat('loading')
     const payload = {
       prenom:    form.prenom,
@@ -142,6 +150,16 @@ export default function ContactForm() {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
+                <input
+                  type="text"
+                  name="societe"
+                  value={piege}
+                  onChange={e => setPiege(e.target.value)}
+                  tabIndex={-1}
+                  autoComplete="off"
+                  aria-hidden="true"
+                  style={{ position: 'absolute', left: '-9999px', width: '1px', height: '1px', opacity: 0 }}
+                />
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-1">Prénom *</label>
